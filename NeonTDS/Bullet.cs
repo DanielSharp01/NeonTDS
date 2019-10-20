@@ -12,6 +12,7 @@ namespace Win2DEngine
         {
             Damage = 20;
             Speed = 0;
+            Sprite = Game.Instance.BulletSprite;
         }
         public int Damage { get; set; }
 

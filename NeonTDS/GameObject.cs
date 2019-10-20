@@ -23,7 +23,7 @@ namespace Win2DEngine
 
         public virtual void Draw(CanvasSpriteBatch sb, CanvasTimingInformation timing)
         {
-            Matrix3x2 matrix = Matrix3x2.CreateTranslation(-Sprite.Origin) * Matrix3x2.CreateRotation(Direction) * Matrix3x2.CreateTranslation(Sprite.Origin) * Matrix3x2.CreateScale(1 / SpriteBuilder.SCALE_FACTOR) * Matrix3x2.CreateTranslation(Position);
+            Matrix3x2 matrix = Matrix3x2.CreateTranslation(-Sprite.Origin) * Matrix3x2.CreateRotation(Direction) * Matrix3x2.CreateScale(1 / SpriteBuilder.SCALE_FACTOR) * Matrix3x2.CreateTranslation(Position);
             sb.Draw(Sprite.Bitmap, matrix, Color);
         }
     }

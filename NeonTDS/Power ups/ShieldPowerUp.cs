@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace  Win2DEngine
 {
-   public class ShieldPowerUp : PowerUpsInt
+   public class ShieldPowerUp : IPowerUps
     {
         public void Use(Player player)
         {
             player.Color = new Vector4(1, 1, 1, 1);
-            player.SetShield();
+            player.Shield = 100;
         }
     }
 }

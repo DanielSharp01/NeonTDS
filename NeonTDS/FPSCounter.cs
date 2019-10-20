@@ -16,8 +16,6 @@ namespace Win2DEngine
 
         public void Update(CanvasTimingInformation timing)
         {
-            
-
             elapsedTime += timing.ElapsedTime.TotalSeconds;
             if (elapsedTime > 1)
             {

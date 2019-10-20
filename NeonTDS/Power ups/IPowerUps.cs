@@ -6,11 +6,8 @@ using System.Threading.Tasks;
 
 namespace Win2DEngine
 {
-    interface PowerUpsInt
+    public interface IPowerUps
     {
-
         void Use(Player player);
-
-
     }
 }

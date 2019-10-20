@@ -7,12 +7,11 @@ using System.Threading.Tasks;
 
 namespace Win2DEngine
 {
-   public class ExtraShotPowerUp : PowerUpsInt
+   public class ExtraShotPowerUp : IPowerUps
     {
         public void Use(Player player)
         {
-            player.Bullet.Damage = 50;
-            player.Bullet.Color = new Vector4(1, 1, 1, 1);
+            player.Damage = 50;
             player.FireRate = 30;
         }
     }

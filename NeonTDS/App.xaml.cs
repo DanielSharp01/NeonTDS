@@ -62,7 +62,7 @@ namespace Win2DEngine
                 }
                 // Ensure the current window is active
 
-                if (false) // Windowed
+                if (true) // Windowed 
                 {
                     ApplicationView.PreferredLaunchViewSize = new Size(800, 480);
                     ApplicationView.PreferredLaunchWindowingMode = ApplicationViewWindowingMode.PreferredLaunchViewSize;

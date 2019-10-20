@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 using Windows.System;
-using Windows.UI.Input;
 
 namespace Win2DEngine
 {
@@ -42,7 +37,7 @@ namespace Win2DEngine
     }
     public class InputManager
     {
-        private InputState actualState = new InputState();
+        private readonly InputState actualState = new InputState();
         public InputState CurrentState { get; private set; } = new InputState();
         public InputState PreviousState { get; private set; } = new InputState();
 
