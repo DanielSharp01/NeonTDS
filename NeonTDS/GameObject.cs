@@ -12,6 +12,7 @@ namespace Win2DEngine
         public Vector2 Position { get; set; }
 
         public float Speed { get; set; }
+        public int Health { get; set; }
 
         public float Direction { get; set; }
 

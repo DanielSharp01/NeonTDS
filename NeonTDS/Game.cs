@@ -30,6 +30,8 @@ namespace Win2DEngine
 
         private List<GameObject> gameObjects = new List<GameObject>();
         private Player player;
+        private Turret turret;
+
 
         private readonly BloomRendering bloomRendering = new BloomRendering
         {
@@ -49,6 +51,12 @@ namespace Win2DEngine
 
             SpriteBuilder spriteBuilder = new SpriteBuilder(canvas, 48, 32, new Vector2((float)(Math.Sqrt(3) / 6 * 48), 16));
             Sprite sprite = spriteBuilder.AddPoints(new Vector2(0, 0), new Vector2(0, 32), new Vector2((float)(Math.Sqrt(3) / 2 * 48), 16)).BuildPath(true);
+
+            SpriteBuilder turretSpriteBuilder = new SpriteBuilder(canvas, 48, 32, new Vector2((float)(Math.Sqrt(3) / 6 * 48), 16));
+            Sprite turretSprite = turretSpriteBuilder.AddPoints(new Vector2(10, 8), new Vector2(10, 24), new Vector2(40, 18), new Vector2(40, 14)).BuildPath(true); //milan
+
+            SpriteBuilder bulletSpriteBuilder = new SpriteBuilder(canvas, 48, 32, new Vector2((float)(Math.Sqrt(3) / 6 * 48), 16));
+            Sprite bulletSprite = bulletSpriteBuilder.AddPoints(new Vector2(0, 0), new Vector2(4, 0)).BuildPath(true); //milan
 
             Vector2[] generateAsteroidPoints(int n, float major, float minor)
             {
@@ -99,6 +107,24 @@ namespace Win2DEngine
             player.Color = new Vector4(1, 0, 0, 1);
             player.Direction = 0;
             gameObjects.Add(player);
+
+            turret = new Turret();
+            turret.Sprite = turretSprite;
+            turret.Color = new Vector4(0, 1, 0, 1);
+            turret.Direction = 0;
+            gameObjects.Add(turret);
+
+            Bullet bullet = new Bullet();
+            bullet.Sprite = bulletSprite;
+            bullet.Color = new Vector4(1, 0, 1, 1);
+            bullet.Direction = (float)Math.PI/2 ;
+            gameObjects.Add(bullet);
+
+            Bullet bullet2 = new Bullet();
+            bullet2.Sprite = bulletSprite;
+            bullet2.Color = new Vector4(1, 0, 1, 1);
+            bullet2.Direction = 0;
+            gameObjects.Add(bullet2);
         }
 
         public void SizeChanged(CanvasAnimatedControl canvas, Size newSize, Size previousSize)
@@ -109,6 +135,7 @@ namespace Win2DEngine
 
         public void Update(CanvasTimingInformation timing)
         {
+
             fpsCounter.Update(timing);
             InputManager.Update();
             foreach (GameObject obj in gameObjects) obj.Update(timing);
@@ -132,5 +159,7 @@ namespace Win2DEngine
             bloomRendering.DrawResult(drawingSession);
             drawingSession.DrawText(fpsCounter.FPS.ToString(), Vector2.Zero, Colors.LimeGreen);
         }
+
+       
     }
 }
