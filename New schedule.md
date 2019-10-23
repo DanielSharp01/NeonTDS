@@ -3,9 +3,9 @@
 ## Week 7 & 8 - Badly working networking
 
 - Bullet and player collisions
-- Entity Management - create, destroy, update, draw, manage with id
+- ~~Entity Management - create, destroy, update, draw, manage with id~~ (Daniel)
+- ~~Decouple rendering and input from entities~~ (Daniel)
 - Basic game logic - Power ups, Bullet - Player hit detecton
-- Game state (health, power ups etc.)
 - Rendering + extra graphic work
 - Input -> Networking
 - UDP low level
