@@ -1,21 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Win2DEngine
+﻿namespace NeonTDS
 {
-   public class Bullet : GameObject
+    public class Bullet : Entity
     {
-        public Bullet()
+        public Player Owner { get; }
+        public Bullet(EntityManager entityManager, Player owner):
+            base(entityManager, Shape.Bullet)
         {
-            Damage = 20;
-            Speed = 0;
-            Sprite = Game.Instance.BulletSprite;
+            Owner = owner;
         }
-        public int Damage { get; set; }
-
-
     }
 }

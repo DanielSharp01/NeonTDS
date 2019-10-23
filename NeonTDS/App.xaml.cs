@@ -7,7 +7,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 
-namespace Win2DEngine
+namespace NeonTDS
 {
     /// <summary>
     /// Provides application-specific behavior to supplement the default Application class.

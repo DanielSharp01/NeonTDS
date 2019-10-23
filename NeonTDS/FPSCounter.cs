@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Win2DEngine
+namespace NeonTDS
 {
     public class FPSCounter
     {

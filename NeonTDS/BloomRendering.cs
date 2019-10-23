@@ -3,7 +3,7 @@ using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Windows.Foundation;
 
-namespace Win2DEngine
+namespace NeonTDS
 {
     public class BloomRendering
     {
