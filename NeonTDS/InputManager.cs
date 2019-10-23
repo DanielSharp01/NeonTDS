@@ -2,7 +2,7 @@
 using System.Numerics;
 using Windows.System;
 
-namespace Win2DEngine
+namespace NeonTDS
 {
     public enum PressState
     {

@@ -120,24 +120,22 @@
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="BloomRendering.cs" />
-    <Compile Include="Bullet.cs" />
     <Compile Include="Camera.cs" />
-    <Compile Include="Power ups\ExtraShotPowerUp.cs" />
+    <Compile Include="DrawableEntity.cs" />
+    <Compile Include="Entity.cs" />
+    <Compile Include="EntityManager.cs" />
+    <Compile Include="EntityRenderer.cs" />
+    <Compile Include="IDrawable.cs" />
     <Compile Include="FPSCounter.cs" />
     <Compile Include="Game.cs" />
-    <Compile Include="GameObject.cs" />
     <Compile Include="InputManager.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Player.cs" />
-    <Compile Include="Power ups\IPowerUps.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Power ups\RapidFirePowerUp.cs" />
-    <Compile Include="Power ups\ShieldPowerUp.cs" />
-    <Compile Include="Sprite.cs" />
+    <Compile Include="Shape.cs" />
     <Compile Include="SpriteBuilder.cs" />
-    <Compile Include="Turret.cs" />
+    <Compile Include="WeaponType.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">

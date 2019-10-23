@@ -7,9 +7,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using Windows.Foundation;
+using Windows.System;
 using Windows.UI;
 
-namespace Win2DEngine
+namespace NeonTDS
 {
     public class Game
     {
@@ -24,26 +25,13 @@ namespace Win2DEngine
         private readonly FPSCounter fpsCounter = new FPSCounter();
         public InputManager InputManager { get; } = new InputManager();
         public Camera Camera { get; } = new Camera();
-        public void Load()
-        {
-            // Only data can go here, intialize sprites in CreateResources
-        }
+        
 
-        private List<GameObject> creatableGameObjects = new List<GameObject>();
-        private List<GameObject> gameObjects = new List<GameObject>();
-        private List<GameObject> destroyableGameObjects = new List<GameObject>();
-
-        private Player player;
-        private Turret turret;
-
-        private Sprite testPoints;
-        public string DebugString { get; set; } = "";
+        EntityManager EntityManager = new EntityManager();
+        EntityRenderer EntityRenderer = new EntityRenderer();
+        Player LocalPlayer;
         public Random Random { get; } = new Random();
-
-
-        public Sprite TurretSprite;
-        public Sprite PlayerSprite;
-        public Sprite BulletSprite;
+        public string DebugString { get; set; } = "";
 
         private readonly BloomRendering bloomRendering = new BloomRendering
         {
@@ -51,6 +39,14 @@ namespace Win2DEngine
             BloomThreshold = 0,
             BloomBlur = 16
         };
+
+        public void Load()
+        {
+            EntityManager.EntityCreated += EntityRenderer.CreateDrawable;
+            EntityManager.EntityDestroyed += EntityRenderer.DestroyDrawable;
+            Camera.FollowedEntity = LocalPlayer = (Player)EntityManager.Create(new Player(EntityManager) { Color = new Vector4(1, 0, 0, 1), MinSpeed = 100, MaxSpeed = 700 } );
+            EntityManager.Create(new Player(EntityManager) { Color = new Vector4(0, 0, 1, 1), MinSpeed = 0, MaxSpeed = 700 });
+        }
 
         public void CreateResources(CanvasAnimatedControl canvas)
         {
@@ -61,76 +57,7 @@ namespace Win2DEngine
             Camera.Size = canvas.Size.ToVector2();
             Camera.Center = Vector2.Zero;
 
-            PlayerSprite = new SpriteBuilder(canvas, 48, 32, new Vector2((float)(Math.Sqrt(3) / 6 * 48), 16))
-                .AddPoints(new Vector2(0, 0), new Vector2(0, 32), new Vector2((float)(Math.Sqrt(3) / 2 * 48), 16)).BuildPath(true);
-
-            TurretSprite = new SpriteBuilder(canvas, 48, 32, new Vector2((float)(Math.Sqrt(3) / 6 * 48), 16))
-                .AddPoints(new Vector2(10, 8), new Vector2(10, 24), new Vector2(40, 18), new Vector2(40, 14)).BuildPath(true);
-
-            BulletSprite = new SpriteBuilder(canvas, 24, 4, new Vector2(0, 2))
-                .AddPoints(new Vector2(0, 2), new Vector2(24, 2)).BuildPath(true);
-
-
-            Vector2[] generateAsteroidPoints(int n, float major, float minor)
-            {
-                double[] randAngles = new double[n];
-                for (int i = 0; i < n; i++)
-                {
-                    randAngles[i] = Math.PI * 2 * Random.NextDouble();
-                }
-                Array.Sort(randAngles);
-
-                Vector2[] ret = new Vector2[n];
-
-                for (int i = 0; i < n; i++)
-                {
-                    ret[i] = new Vector2(major + major * (float)Math.Cos(randAngles[i]), minor + minor * (float)Math.Sin(randAngles[i]));
-                }
-                return ret;
-            }
-
-            Vector2 centerOfMass(Vector2[] points)
-            {
-                Vector2 sum = Vector2.Zero;
-                foreach (Vector2 point in points)
-                {
-                    sum += point;
-                }
-
-                return sum / points.Length;
-            }
-
-            for (int i = 0; i < 100; i++)
-            {
-                float major = (float)(Random.NextDouble() * 64 + 64);
-                float minor = major * (0.75f + (float)Random.NextDouble() * 0.5f);
-                GameObject obj = new GameObject();
-                Vector2[] points = generateAsteroidPoints((int)(major / 8), major, minor);
-                obj.Sprite = new SpriteBuilder(canvas, 2 * major, 2 * minor, centerOfMass(points)).AddPoints(points).BuildPath(true);
-                obj.Position = new Vector2((float)Random.NextDouble() * 1920, (float)Random.NextDouble() * 1080);
-                obj.Direction = (float)(Random.NextDouble() * Math.PI * 2);
-                obj.Speed = (float)Random.NextDouble() * 50;
-                obj.Color = new Vector4((float)Random.NextDouble(), (float)Random.NextDouble(), (float)Random.NextDouble(), 1);
-                gameObjects.Add(obj);
-            }
-
-            player = new Player
-            {
-                MinSpeed = 0,
-                Color = new Vector4(1, 0, 0, 1),
-                Direction = 0
-            };
-            gameObjects.Add(player);
-        }
-
-        public void CreateObject(GameObject obj)
-        {
-            creatableGameObjects.Add(obj);
-        }
-
-        public void DestroyObject(GameObject obj)
-        {
-            destroyableGameObjects.Add(obj);
+            EntityRenderer.SetupSprites(canvas);
         }
 
         public void SizeChanged(CanvasAnimatedControl canvas, Size newSize, Size previousSize)
@@ -143,22 +70,44 @@ namespace Win2DEngine
         {
             fpsCounter.Update(timing);
             InputManager.Update();
-            
-            // TODO: Don't linear search objects
-            foreach (GameObject obj in creatableGameObjects)
-            {
-                gameObjects.Add(obj);
-            }
-            creatableGameObjects.Clear();
-            foreach (GameObject obj in gameObjects) obj.Update(timing);
-            foreach (GameObject obj in destroyableGameObjects)
-            {
-                gameObjects.Remove(obj);
-            }
-            destroyableGameObjects.Clear();
 
-            Camera.Update(player);
+            HandlePlayerInput();
+
+            EntityManager.Update((float)timing.ElapsedTime.TotalSeconds);
+            Camera.Update();
             InputManager.AfterUpdate();
+        }
+
+        public void HandlePlayerInput()
+        {
+            var diff = InputManager.CurrentState.MousePosition - Camera.Size / 2;
+            LocalPlayer.TurretDirection = (float)Math.Atan2(diff.Y, diff.X);
+
+            var turnState = TurnState.None;
+            if (InputManager.IsKey(VirtualKey.A, PressState.Down))
+            {
+                turnState = TurnState.Left;
+            }
+            if (InputManager.IsKey(VirtualKey.D, PressState.Down))
+            {
+                if (turnState == TurnState.None) turnState = TurnState.Right;
+                else turnState = TurnState.None;
+            }
+            LocalPlayer.TurnState = turnState;
+
+            var speedState = SpeedState.None;
+            if (InputManager.IsKey(VirtualKey.W, PressState.Down))
+            {
+                speedState = SpeedState.SpeedUp;
+            }
+            if (InputManager.IsKey(VirtualKey.S, PressState.Down))
+            {
+                if (speedState == SpeedState.None) speedState = SpeedState.SlowDown;
+                else speedState = SpeedState.None;
+            }
+            LocalPlayer.SpeedState = speedState;
+
+            LocalPlayer.Firing = InputManager.IsMouseButton(MouseButton.Left, PressState.Down);
         }
 
         public void Draw(CanvasDrawingSession drawingSession, CanvasTimingInformation timing)
@@ -170,7 +119,7 @@ namespace Win2DEngine
                 ds.Transform = Camera.Transform;
                 using (var spriteBatch = ds.CreateSpriteBatch())
                 {
-                    foreach (GameObject obj in gameObjects) obj.Draw(spriteBatch, timing);
+                    EntityRenderer.Draw(spriteBatch, timing);
                 }
             }
 

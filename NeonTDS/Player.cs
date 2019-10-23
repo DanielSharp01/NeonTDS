@@ -1,95 +1,76 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.UI;
-using Windows.System;
 
-namespace Win2DEngine
+namespace NeonTDS
 {
-    public class Player : GameObject
+    public class Player : Entity
     {
-        public Turret Turret { get; set; }
-
-        public int MinSpeed { get; set; } = 100;
-        public int MaxSpeed { get; set; } = 700;
-
-        public Sprite TurretSprite { get; set; }
-        public float TurretDirection { get; set; }
-
-        private float fireTimer = 0;
-        private int fireRate = 250;
-        public int FireRate
-        {
-            get { return fireRate; }
-            set
-            {
-                if (value < 500) fireRate = value;
-            }
-        }
-
-
-        public float Damage { get; set; }
-
+        public Vector4 Color { get; set; }
+        public int Health { get; set; }
+        public float MinSpeed { get; set; }
+        public float MaxSpeed { get; set; }
         public int Shield { get; set; }
 
-        public Player()
+        private float fireTimer;
+        private int fireRate;
+        public int FireRate {
+            get => fireRate;
+            set
+            {
+                fireRate = value;
+                fireTimer = 60.0f / fireRate;
+            }
+        }
+        public bool Firing { get; set; }
+
+        public WeaponType WeaponType { get; set; }
+        public TurnState TurnState { get; set; }
+        public SpeedState SpeedState { get; set; }
+
+        public float TurretDirection { get; set; }
+        
+
+        public Matrix3x2 TurretTransformation => Matrix3x2.CreateTranslation(-Shape.Origin) *
+            Matrix3x2.CreateRotation(TurretDirection) *
+            Matrix3x2.CreateTranslation(Position);
+
+        public Player(EntityManager entityManager)
+            : base(entityManager, Shape.Player)
         {
-            Speed = 400;
-            Health = 100;
-            Shield = 0;
-            Sprite = Game.Instance.PlayerSprite;
-            TurretSprite = Game.Instance.TurretSprite;
-            fireTimer = 60f / FireRate;
+            FireRate = 150;
         }
 
-        public override void Update(CanvasTimingInformation timing)
+        public override void Update(float elapsedTimeSeconds)
         {
-            if (Game.Instance.InputManager.IsKey(VirtualKey.A, PressState.Down))
+            if (TurnState == TurnState.Left)
             {
-                Direction -= (float)(Math.PI * timing.ElapsedTime.TotalSeconds);
+                Direction -= (float)(Math.PI * elapsedTimeSeconds);
             }
-            if (Game.Instance.InputManager.IsKey(VirtualKey.D, PressState.Down))
+            else if(TurnState == TurnState.Right)
             {
-                Direction += (float)(Math.PI * timing.ElapsedTime.TotalSeconds);
-            }
-            
-
-            if (Game.Instance.InputManager.IsKey(VirtualKey.W, PressState.Down))
-            {
-                Speed += 300 * (float)timing.ElapsedTime.TotalSeconds;
-            }
-            if (Game.Instance.InputManager.IsKey(VirtualKey.S, PressState.Down))
-            {
-                Speed -= 300 * (float)timing.ElapsedTime.TotalSeconds;
+                Direction += (float)(Math.PI * elapsedTimeSeconds);
             }
 
-            // Clamp values
+
+            if (SpeedState == SpeedState.SpeedUp)
+            {
+                Speed += 300 * elapsedTimeSeconds;
+            }
+            else if (SpeedState == SpeedState.SlowDown)
+            {
+                Speed -= 300 * elapsedTimeSeconds;
+            }
+
             if (Speed < MinSpeed) Speed = MinSpeed;
             if (Speed > MaxSpeed) Speed = MaxSpeed;
-            base.Update(timing);
+            base.Update(elapsedTimeSeconds);
 
-            var diff = Game.Instance.InputManager.CurrentState.MousePosition - Game.Instance.Camera.Size / 2;
-            TurretDirection = (float)Math.Atan2(diff.Y, diff.X);
-            fireTimer += (float)timing.ElapsedTime.TotalSeconds;
-            Game.Instance.DebugString = $"{fireTimer}s";
-
-            if (fireTimer >= (60f / FireRate) && Game.Instance.InputManager.IsMouseButton(MouseButton.Left, PressState.Down))
+            fireTimer += elapsedTimeSeconds;
+            if (fireTimer >= (60f / FireRate) && Firing)
             {
-                Game.Instance.CreateObject(new Bullet() { Direction = TurretDirection, Position = Position, Speed = 2000, Color = Color });
                 fireTimer = 0;
+                entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 2000, Direction = TurretDirection });
             }
-        }
-
-        public override void Draw(CanvasSpriteBatch sb, CanvasTimingInformation timing)
-        {
-            Matrix3x2 matrix = Matrix3x2.CreateTranslation(-Sprite.Origin) * Matrix3x2.CreateRotation(Direction) * Matrix3x2.CreateScale(1 / SpriteBuilder.SCALE_FACTOR) * Matrix3x2.CreateTranslation(Position);
-            sb.Draw(Sprite.Bitmap, matrix, Color);
-            Matrix3x2 turretMatrix = Matrix3x2.CreateTranslation(-TurretSprite.Origin) * Matrix3x2.CreateRotation(TurretDirection) * Matrix3x2.CreateScale(1 / SpriteBuilder.SCALE_FACTOR) * Matrix3x2.CreateTranslation(Position);
-            sb.Draw(TurretSprite.Bitmap, turretMatrix, Color);
         }
     }
 }
