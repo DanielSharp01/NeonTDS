@@ -2,15 +2,20 @@
 
 ## Week 7 & 8 - Badly working networking
 
-- Bullet and player collisions
+### Week 7 (would be good)
+
+- Bullet and player collisions (Attila)
+- UDP low level (Milan)
+- Networking interfaces - Input, Connect request - Connect response, GameState messages (Milan) (+ priority, Reconcilation dependency)
 - ~~Entity Management - create, destroy, update, draw, manage with id~~ (Daniel)
 - ~~Decouple rendering and input from entities~~ (Daniel)
-- Basic game logic - Power ups, Bullet - Player hit detecton
-- Rendering + extra graphic work
-- Input -> Networking
-- UDP low level
-- Networking interfaces - Input, Connect request - Connect response, GameState messages
-- Basic client-server reconcilation algorithm (jump to latest server response)
+
+### Week 8
+
+- Basic game logic - Power ups, Bullet - Player hit detecton (Attila)
+- Rendering + extra graphic work (Attila)
+- Input -> Networking (Milan)
+- Basic client-server reconcilation algorithm (jump to latest server response) (Daniel)
 
 ## Further development
 
