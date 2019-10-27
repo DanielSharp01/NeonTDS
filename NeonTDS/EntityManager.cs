@@ -11,6 +11,8 @@ namespace NeonTDS
 
         private Dictionary<Entity, Guid> entityIds = new Dictionary<Entity, Guid>();
 
+		public List<Player> Players { get; set; }  // a setet kiszervezhetjük egy addpalyer metódusba ha kell/úgy jobb
+
         public event Action<Entity> EntityCreated;
         public event Action<Entity> EntityDestroyed;
 
@@ -19,6 +21,7 @@ namespace NeonTDS
         public Entity Create(Entity entity)
         {
             creatableEntities.Add(entity);
+			if (entity is Player player) Players.Add(player);  
             return entity;
         }
 
