@@ -39,6 +39,12 @@ namespace NeonTDS
         {
             FireRate = 150;
         }
+		public void hitByBullet(Bullet bullet) {
+			entityManager.Destroy(bullet);
+			Speed = MinSpeed;
+
+		}
+		
 
         public override void Update(float elapsedTimeSeconds)
         {
