@@ -44,8 +44,8 @@ namespace NeonTDS
         {
             EntityManager.EntityCreated += EntityRenderer.CreateDrawable;
             EntityManager.EntityDestroyed += EntityRenderer.DestroyDrawable;
-            Camera.FollowedEntity = LocalPlayer = (Player)EntityManager.Create(new Player(EntityManager) { Color = new Vector4(1, 0, 0, 1), MinSpeed = 100, MaxSpeed = 700 } );
-            EntityManager.Create(new Player(EntityManager) { Color = new Vector4(0, 0, 1, 1), MinSpeed = 0, MaxSpeed = 700 });
+            Camera.FollowedEntity = LocalPlayer = (Player)EntityManager.Create(new Player(EntityManager) { Color = new Vector4(0, 1, 0, 1), MinSpeed = 0, MaxSpeed = 700 } );
+            EntityManager.Create(new Player(EntityManager) { Color = new Vector4(1, 0, 0, 1), MinSpeed = 0, MaxSpeed = 700, Speed = 50, Position = new Vector2(100, 0) });
         }
 
         public void CreateResources(CanvasAnimatedControl canvas)
@@ -70,7 +70,8 @@ namespace NeonTDS
         {
             fpsCounter.Update(timing);
             InputManager.Update();
-
+            Matrix3x2.Invert(Camera.Transform, out Matrix3x2 inverse);
+            DebugString = Vector2.Transform(InputManager.MousePosition, inverse).ToString();
             HandlePlayerInput();
 
             EntityManager.Update((float)timing.ElapsedTime.TotalSeconds);
@@ -125,7 +126,7 @@ namespace NeonTDS
 
             bloomRendering.DrawResult(drawingSession);
             drawingSession.DrawText(fpsCounter.FPS.ToString(), Vector2.Zero, Colors.LimeGreen);
-            drawingSession.DrawText(DebugString.ToString(), new Vector2(0, 32), Colors.DarkRed);
+            drawingSession.DrawText(DebugString, new Vector2(0, 32), Colors.DarkRed);
         }
     }
 }

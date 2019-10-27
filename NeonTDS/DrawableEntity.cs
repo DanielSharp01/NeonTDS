@@ -27,7 +27,9 @@ namespace NeonTDS
                 }
                 else if (entity is Bullet bullet)
                 {
-                    return bullet.Owner.Color;
+                    var col = bullet.Owner.Color;
+                    col.W = bullet.Speed / 2000;
+                    return col;
                 }
                 else
                 {

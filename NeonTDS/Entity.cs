@@ -31,12 +31,28 @@ namespace NeonTDS
                 if (distance > BoundingRadius) BoundingRadius = distance;
             }
 
+
             Shape = shape;
+        }
+
+        public virtual void OnCreate()
+        {
+
+        }
+
+        public virtual void OnDestroy()
+        {
+
         }
 
         public virtual void Update(float elapsedTimeSeconds)
         {
             Position += new Vector2((float)Math.Cos(Direction), (float)Math.Sin(Direction)) * Speed * elapsedTimeSeconds;
+        }
+
+        public virtual void CollidesWith(Entity other)
+        {
+
         }
 
         public override int GetHashCode()

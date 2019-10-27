@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace NeonTDS
 {
@@ -11,17 +12,28 @@ namespace NeonTDS
 
         private Dictionary<Entity, Guid> entityIds = new Dictionary<Entity, Guid>();
 
-		public List<Player> Players { get; set; }  // a setet kiszervezhetjük egy addpalyer metódusba ha kell/úgy jobb
-
         public event Action<Entity> EntityCreated;
         public event Action<Entity> EntityDestroyed;
 
         public IEnumerable<Entity> Entities => entities.Values;
 
+        public IEnumerable<Entity> GetCollidableEntities(Entity entity)
+        {
+            if (entity is Bullet)
+            {
+                return Entities.Where(e => e is Player);
+            }
+            else if (entity is Player)
+            {
+                return Entities.Where(e => e is Player);
+            }
+
+            return Enumerable.Empty<Entity>();
+        }
+
         public Entity Create(Entity entity)
         {
             creatableEntities.Add(entity);
-			if (entity is Player player) Players.Add(player);  
             return entity;
         }
 
@@ -35,7 +47,9 @@ namespace NeonTDS
             foreach (Entity entity in creatableEntities)
             {
                 entities.Add(entity.ID, entity);
+                entityIds.Add(entity, entity.ID);
                 EntityCreated?.Invoke(entity);
+                entity.OnCreate();
             }
             creatableEntities.Clear();
             foreach (Entity entity in entities.Values)
@@ -45,6 +59,8 @@ namespace NeonTDS
             foreach (Guid id in destroyableEntities)
             {
                 EntityDestroyed?.Invoke(entities[id]);
+                entities[id].OnDestroy();
+                entityIds.Remove(entities[id]);
                 entities.Remove(id);
             }
             destroyableEntities.Clear();

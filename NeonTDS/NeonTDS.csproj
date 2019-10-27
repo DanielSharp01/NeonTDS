@@ -122,6 +122,7 @@
     <Compile Include="BloomRendering.cs" />
     <Compile Include="Bullet.cs" />
     <Compile Include="Camera.cs" />
+    <Compile Include="CollisionAlgorithms.cs" />
     <Compile Include="DrawableEntity.cs" />
     <Compile Include="DrawablePlayer.cs" />
     <Compile Include="Entity.cs" />

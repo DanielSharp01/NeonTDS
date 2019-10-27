@@ -39,13 +39,7 @@ namespace NeonTDS
         {
             FireRate = 150;
         }
-		public void hitByBullet(Bullet bullet) {
-			entityManager.Destroy(bullet);
-			Speed = MinSpeed;
-
-		}
 		
-
         public override void Update(float elapsedTimeSeconds)
         {
             if (TurnState == TurnState.Left)
@@ -76,6 +70,15 @@ namespace NeonTDS
             {
                 fireTimer = 0;
                 entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 2000, Direction = TurretDirection });
+            }
+
+            foreach (Entity entity in entityManager.GetCollidableEntities(this))
+            {
+                if (entity != this && CollisionAlgorithms.TestClosedShapes(this, entity))
+                {
+                    entityManager.Destroy(this);
+                    entityManager.Destroy(entity);
+                }
             }
         }
     }

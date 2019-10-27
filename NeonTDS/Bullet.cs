@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
@@ -6,47 +7,54 @@ namespace NeonTDS
 {
     public class Bullet : Entity
     {
+        public Vector2 SpawnPosition { get; private set; }
+        public bool Harmless = false;
         public Player Owner { get; }
+
         public Bullet(EntityManager entityManager, Player owner):
             base(entityManager, Shape.Bullet)
         {
             Owner = owner;
         }
-		public override void Update(float elapsedTimeSeconds) {
-			
-			foreach(Player player in entityManager.Players) {
-				
-				if (collidingWithPlayer(player)) {
-					player.hitByBullet(this);
-					return;
-				}
-			}
+
+        public override void OnCreate()
+        {
+            SpawnPosition = Position;
+        }
+
+        public override void Update(float elapsedTimeSeconds) {
+
 			base.Update(elapsedTimeSeconds);
-		}
-		public bool collidingWithPlayer(Player player) {
+            if (!Harmless)
+            {
+                foreach (Entity entity in entityManager.GetCollidableEntities(this))
+                {
+                    if (entity == Owner) continue;
 
-			Vector2 A = player.Shape.Points.ElementAt(0) + player.Position;
-			Vector2 B = player.Shape.Points.ElementAt(1) + player.Position;
-			Vector2 C = player.Shape.Points.ElementAt(2) + player.Position;
+                    Vector2? hitPosition = CollisionAlgorithms.TestBulletHit(this, entity);
 
-			float playerArea = AreaOfTriangle(A, B, C);
+                    if (hitPosition != null)
+                    {
+                        entity.CollidesWith(this);
+                        entityManager.Destroy(this);
 
-			foreach(Vector2 point in Shape.Points) {
-				Vector2 P = point + Position;
-				if (playerArea >= AreaOfTriangle(A, B, P) + AreaOfTriangle(P, B, C) + AreaOfTriangle(A, P, C)) return true;
-			}
-			return false;
+                        for (int i = 0; i < 16 + Game.Instance.Random.Next(16); i++)
+                        {
+                            entityManager.Create(new Bullet(entityManager, (Player)entity) { Harmless = true, Position = hitPosition.Value, Speed = 1000 + 500 * (float)Game.Instance.Random.NextDouble(), Direction = (Game.Instance.Random.NextDouble() > 0.25 ? 0 : 1) * (float)Math.PI + Direction - (float)Math.PI / 3 * ((float)Game.Instance.Random.NextDouble() - 0.5f) });  ;
+                        }
+                        return;
+                    }
+                }
+            }
 
-			
-		}
-
-		public float AreaOfTriangle(Vector2 A, Vector2 B, Vector2 C) {
-			float a = (A - B).Length();
-			float b = (A - C).Length();
-			float c = (C - B).Length();
-
-			float s = (a + b + c) / 2;
-			return (float)System.Math.Sqrt(s * (s - a) * (s - b) * (s - c)); //Heron képlet
-		}
+            if (Harmless)
+            {
+                Speed -= 50;
+                if (Speed < 0)
+                {
+                    entityManager.Destroy(this);
+                }
+            }
+        }
 	}
 }
