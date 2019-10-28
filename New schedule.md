@@ -4,18 +4,19 @@
 
 ### Week 7 (would be good)
 
-- Bullet and player collisions (Attila)
-- UDP low level (Milan)
-- Networking interfaces - Input, Connect request - Connect response, GameState messages (Milan) (+ priority, Reconcilation dependency)
+- ~~Bullet and player collisions (Attila)~~
+- ~~UDP low level (Milan)~~
 - ~~Entity Management - create, destroy, update, draw, manage with id~~ (Daniel)
 - ~~Decouple rendering and input from entities~~ (Daniel)
 
 ### Week 8
 
-- Basic game logic - Power ups, Bullet - Player hit detecton (Attila)
-- Rendering + extra graphic work (Attila)
+- Networking interfaces - Input, Connect request - Connect response, GameState messages (Milan) (+ priority, Reconcilation dependency)
+- Basic game logic - Power ups (Attila)
+- Rendering + extra graphic work (for power ups, bullets) (Attila)
 - Input -> Networking (Milan)
 - Basic client-server reconcilation algorithm (jump to latest server response) (Daniel)
+- Game state management (Daniel)
 
 ## Further development
 
