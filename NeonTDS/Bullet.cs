@@ -17,11 +17,6 @@ namespace NeonTDS
             Owner = owner;
         }
 
-        public override void OnCreate()
-        {
-            SpawnPosition = Position;
-        }
-
         public override void Update(float elapsedTimeSeconds) {
 
 			base.Update(elapsedTimeSeconds);
@@ -31,7 +26,7 @@ namespace NeonTDS
                 {
                     if (entity == Owner) continue;
 
-                    Vector2? hitPosition = CollisionAlgorithms.TestBulletHit(this, entity);
+                    Vector2? hitPosition = CollisionAlgorithms.TestBulletHit(this, entity, elapsedTimeSeconds);
 
                     if (hitPosition != null)
                     {

@@ -45,7 +45,7 @@ namespace NeonTDS
             EntityManager.EntityCreated += EntityRenderer.CreateDrawable;
             EntityManager.EntityDestroyed += EntityRenderer.DestroyDrawable;
             Camera.FollowedEntity = LocalPlayer = (Player)EntityManager.Create(new Player(EntityManager) { Color = new Vector4(0, 1, 0, 1), MinSpeed = 0, MaxSpeed = 700 } );
-            EntityManager.Create(new Player(EntityManager) { Color = new Vector4(1, 0, 0, 1), MinSpeed = 0, MaxSpeed = 700, Speed = 50, Position = new Vector2(100, 0) });
+            EntityManager.Create(new Player(EntityManager) { Color = new Vector4(1, 0, 0, 1), MinSpeed = 0, Direction = 0.4f, MaxSpeed = 700, Speed = 50, Position = new Vector2(100, 0) });
         }
 
         public void CreateResources(CanvasAnimatedControl canvas)
