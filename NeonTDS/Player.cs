@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.UI;
+using System;
 using System.Numerics;
 
 namespace NeonTDS
 {
     public class Player : Entity
     {
-        public Vector4 Color { get; set; }
         public int Health { get; set; }
         public float MinSpeed { get; set; }
         public float MaxSpeed { get; set; }
@@ -80,6 +81,20 @@ namespace NeonTDS
                     entityManager.Destroy(entity);
                 }
             }
+        }
+
+        public override void Draw(EntityRenderer renderer, CanvasSpriteBatch sb, CanvasTimingInformation timing)
+        {
+            sb.Draw(renderer.Sprites[Shape], Matrix3x2.CreateTranslation(-Shape.Origin *
+                SpriteBuilder.SCALE_FACTOR) *
+                Matrix3x2.CreateRotation(Direction) *
+                Matrix3x2.CreateScale(1f / SpriteBuilder.SCALE_FACTOR) *
+                Matrix3x2.CreateTranslation(Position), Color);
+            sb.Draw(renderer.Sprites[Shape.Turret], Matrix3x2.CreateTranslation(-Shape.Origin *
+                SpriteBuilder.SCALE_FACTOR) *
+                Matrix3x2.CreateRotation(TurretDirection) *
+                Matrix3x2.CreateScale(1f / SpriteBuilder.SCALE_FACTOR) *
+                Matrix3x2.CreateTranslation(Position), Color);
         }
     }
 }

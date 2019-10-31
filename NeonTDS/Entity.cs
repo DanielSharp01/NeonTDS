@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.UI;
+using System;
 using System.Linq;
 using System.Numerics;
 
 namespace NeonTDS
 {
-    public class Entity
+    public class Entity: IDrawable
     {
         protected EntityManager entityManager;
         public Guid ID { get; private set; }
@@ -13,6 +15,7 @@ namespace NeonTDS
         public float Direction { get; set; }
         public Shape Shape { get; }
         public float BoundingRadius { get; private set; }
+        public Vector4 Color { get; set; }
 
         public Matrix3x2 Transformation => Matrix3x2.CreateTranslation(-Shape.Origin) *
             Matrix3x2.CreateRotation(Direction) *
@@ -48,6 +51,15 @@ namespace NeonTDS
         public virtual void Update(float elapsedTimeSeconds)
         {
             Position += new Vector2((float)Math.Cos(Direction), (float)Math.Sin(Direction)) * Speed * elapsedTimeSeconds;
+        }
+
+        public virtual void Draw(EntityRenderer renderer, CanvasSpriteBatch sb, CanvasTimingInformation timing)
+        {
+            sb.Draw(renderer.Sprites[Shape], Matrix3x2.CreateTranslation(-Shape.Origin *
+                SpriteBuilder.SCALE_FACTOR) *
+                Matrix3x2.CreateRotation(Direction) *
+                Matrix3x2.CreateScale(1f / SpriteBuilder.SCALE_FACTOR) *
+                Matrix3x2.CreateTranslation(Position));
         }
 
         public virtual void CollidesWith(Entity other)

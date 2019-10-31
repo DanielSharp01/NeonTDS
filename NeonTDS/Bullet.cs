@@ -15,6 +15,7 @@ namespace NeonTDS
             base(entityManager, Shape.Bullet)
         {
             Owner = owner;
+            Color = Owner?.Color ?? new Vector4(1, 1, 1, 1);
         }
 
         public override void Update(float elapsedTimeSeconds) {

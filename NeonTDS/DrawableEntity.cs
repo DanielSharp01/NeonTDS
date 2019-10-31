@@ -17,34 +17,13 @@ namespace NeonTDS
             this.entity = entity;
         }
 
-        public Vector4 Color
-        {
-            get
-            {
-                if (entity is Player player)
-                {
-                    return player.Color;
-                }
-                else if (entity is Bullet bullet)
-                {
-                    var col = bullet.Owner.Color;
-                    col.W = bullet.Speed / 2000;
-                    return col;
-                }
-                else
-                {
-                    return new Vector4(1, 1, 1, 1);
-                }
-            }
-        }
-
         public void Draw(EntityRenderer renderer, CanvasSpriteBatch sb, CanvasTimingInformation timing)
         {
             sb.Draw(renderer.Sprites[entity.Shape], Matrix3x2.CreateTranslation(-entity.Shape.Origin *
                 SpriteBuilder.SCALE_FACTOR) *
                 Matrix3x2.CreateRotation(entity.Direction) *
                 Matrix3x2.CreateScale(1f / SpriteBuilder.SCALE_FACTOR) *
-                Matrix3x2.CreateTranslation(entity.Position), Color);
+                Matrix3x2.CreateTranslation(entity.Position), entity.Color);
         }
     }
 }
