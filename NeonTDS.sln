@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.852
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29326.143
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NeonTDS", "NeonTDS\NeonTDS.csproj", "{8785CCB5-6E67-4318-A0AF-81B3841346CF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UDPServer", "UDPServer\UDPServer.csproj", "{65E8F878-970C-46B4-9FAA-0CBCA3285CCA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameLogic", "GameLogic\GameLogic.csproj", "{6CD86990-A6ED-420E-949D-2BEDA7BDE949}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -67,6 +69,26 @@ Global
 		{65E8F878-970C-46B4-9FAA-0CBCA3285CCA}.Release|x64.Build.0 = Release|Any CPU
 		{65E8F878-970C-46B4-9FAA-0CBCA3285CCA}.Release|x86.ActiveCfg = Release|Any CPU
 		{65E8F878-970C-46B4-9FAA-0CBCA3285CCA}.Release|x86.Build.0 = Release|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Debug|ARM.Build.0 = Debug|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Debug|x64.Build.0 = Debug|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Debug|x86.Build.0 = Debug|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Release|ARM.ActiveCfg = Release|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Release|ARM.Build.0 = Release|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Release|ARM64.Build.0 = Release|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Release|x64.ActiveCfg = Release|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Release|x64.Build.0 = Release|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Release|x86.ActiveCfg = Release|Any CPU
+		{6CD86990-A6ED-420E-949D-2BEDA7BDE949}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

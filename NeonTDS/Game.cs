@@ -2,8 +2,6 @@
 using Microsoft.Graphics.Canvas.UI;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using Windows.Foundation;
@@ -30,7 +28,6 @@ namespace NeonTDS
         EntityManager EntityManager = new EntityManager();
         EntityRenderer EntityRenderer = new EntityRenderer();
         Player LocalPlayer;
-        public Random Random { get; } = new Random();
         public string DebugString { get; set; } = "";
 
         private readonly BloomRendering bloomRendering = new BloomRendering
@@ -43,9 +40,25 @@ namespace NeonTDS
         public void Load()
         {
             EntityManager.EntityCreated += EntityRenderer.CreateDrawable;
+            EntityManager.EntityCreated += entity =>
+            {
+                if (entity is Player)
+                {
+                    entity.OnCollisionWith += other =>
+                    {
+                        if (other is Bullet bullet) new BulletImpactEffect(bullet.HitPosition, other.Direction, entity.Color).Spawn(EntityManager);
+                    };
+                }
+            };
+
             EntityManager.EntityDestroyed += EntityRenderer.DestroyDrawable;
-            Camera.FollowedEntity = LocalPlayer = (Player)EntityManager.Create(new Player(EntityManager) { Color = new Vector4(0, 1, 0, 1), MinSpeed = 0, MaxSpeed = 700 } );
-            EntityManager.Create(new Player(EntityManager) { Color = new Vector4(1, 0, 0, 1), MinSpeed = 0, Direction = 0.4f, MaxSpeed = 700, Speed = 50, Position = new Vector2(100, 0) });
+            EntityManager.EntityDestroyed += entity =>
+            {
+                if (entity is Player) new PlayerExplosionEffect(entity.Position, entity.Color).Spawn(EntityManager);
+            };
+
+            Camera.FollowedEntity = LocalPlayer = (Player)EntityManager.Create(new Player(EntityManager) { Color = new Vector4(0, 1, 0, 1), MinSpeed = 0, MaxSpeed = 700, Health = 100 } );
+            EntityManager.Create(new Player(EntityManager) { Color = new Vector4(1, 0, 0, 1), MinSpeed = 0, Direction = 0.4f, MaxSpeed = 700, Speed = 50, Position = new Vector2(100, 0), Health = 100 });
         }
 
         public void CreateResources(CanvasAnimatedControl canvas)

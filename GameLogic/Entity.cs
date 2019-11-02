@@ -1,12 +1,10 @@
-﻿using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.UI;
-using System;
+﻿using System;
 using System.Linq;
 using System.Numerics;
 
 namespace NeonTDS
 {
-    public class Entity: IDrawable
+    public class Entity
     {
         protected EntityManager entityManager;
         public Guid ID { get; private set; }
@@ -20,6 +18,13 @@ namespace NeonTDS
         public Matrix3x2 Transformation => Matrix3x2.CreateTranslation(-Shape.Origin) *
             Matrix3x2.CreateRotation(Direction) *
             Matrix3x2.CreateTranslation(Position);
+
+        public event Action<Entity> OnCollisionWith;
+
+        public void CleaEvents()
+        {
+            OnCollisionWith = null;
+        }
 
         public Entity(EntityManager entityManager, Shape shape)
         {
@@ -50,21 +55,12 @@ namespace NeonTDS
 
         public virtual void Update(float elapsedTimeSeconds)
         {
-            Position += new Vector2((float)Math.Cos(Direction), (float)Math.Sin(Direction)) * Speed * elapsedTimeSeconds;
-        }
-
-        public virtual void Draw(EntityRenderer renderer, CanvasSpriteBatch sb, CanvasTimingInformation timing)
-        {
-            sb.Draw(renderer.Sprites[Shape], Matrix3x2.CreateTranslation(-Shape.Origin *
-                SpriteBuilder.SCALE_FACTOR) *
-                Matrix3x2.CreateRotation(Direction) *
-                Matrix3x2.CreateScale(1f / SpriteBuilder.SCALE_FACTOR) *
-                Matrix3x2.CreateTranslation(Position));
+            Position += GameMath.Vector2FromAngle(Direction) * Speed * elapsedTimeSeconds;
         }
 
         public virtual void CollidesWith(Entity other)
         {
-
+            OnCollisionWith?.Invoke(other);
         }
 
         public override int GetHashCode()

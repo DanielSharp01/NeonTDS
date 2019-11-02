@@ -17,13 +17,18 @@ namespace NeonTDS
 
         public IEnumerable<Entity> Entities => entities.Values;
 
-        public IEnumerable<Entity> GetCollidableEntities(Entity entity)
+        public IEnumerable<Entity> GetCollidableEntities<T>(T entity) where T: Entity
         {
-            if (entity is Bullet)
+            return GetCollidableEntities<T>();
+        }
+
+        public IEnumerable<Entity> GetCollidableEntities<T>() where T : Entity
+        {
+            if (typeof(T) == typeof(Bullet))
             {
                 return Entities.Where(e => e is Player);
             }
-            else if (entity is Player)
+            else if (typeof(T) == typeof(Player))
             {
                 return Entities.Where(e => e is Player);
             }
@@ -59,6 +64,7 @@ namespace NeonTDS
             foreach (Guid id in destroyableEntities)
             {
                 EntityDestroyed?.Invoke(entities[id]);
+                entities[id].CleaEvents();
                 entities[id].OnDestroy();
                 entityIds.Remove(entities[id]);
                 entities.Remove(id);

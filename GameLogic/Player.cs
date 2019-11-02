@@ -1,6 +1,4 @@
-﻿using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.UI;
-using System;
+﻿using System;
 using System.Numerics;
 
 namespace NeonTDS
@@ -77,24 +75,33 @@ namespace NeonTDS
             {
                 if (entity != this && CollisionAlgorithms.TestClosedShapes(this, entity))
                 {
-                    entityManager.Destroy(this);
-                    entityManager.Destroy(entity);
+                    entity.CollidesWith(this);
+                    CollidesWith(entity);
                 }
             }
         }
 
-        public override void Draw(EntityRenderer renderer, CanvasSpriteBatch sb, CanvasTimingInformation timing)
+        public void DamagePlayer(int damage)
         {
-            sb.Draw(renderer.Sprites[Shape], Matrix3x2.CreateTranslation(-Shape.Origin *
-                SpriteBuilder.SCALE_FACTOR) *
-                Matrix3x2.CreateRotation(Direction) *
-                Matrix3x2.CreateScale(1f / SpriteBuilder.SCALE_FACTOR) *
-                Matrix3x2.CreateTranslation(Position), Color);
-            sb.Draw(renderer.Sprites[Shape.Turret], Matrix3x2.CreateTranslation(-Shape.Origin *
-                SpriteBuilder.SCALE_FACTOR) *
-                Matrix3x2.CreateRotation(TurretDirection) *
-                Matrix3x2.CreateScale(1f / SpriteBuilder.SCALE_FACTOR) *
-                Matrix3x2.CreateTranslation(Position), Color);
+            int shieldDamage = Math.Min(damage, Shield);
+            Shield -= shieldDamage;
+            Health -= damage - shieldDamage;
+            if (Health < 0) entityManager.Destroy(this);
+        }
+
+        public override void CollidesWith(Entity other)
+        {
+            base.CollidesWith(other);
+            if (other is Bullet)
+            {
+                DamagePlayer(5);
+            }
+            else if (other is Player)
+            {
+                Health = 0;
+                Shield = 0;
+                entityManager.Destroy(this);
+            }
         }
     }
 }

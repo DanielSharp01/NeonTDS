@@ -120,11 +120,10 @@
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="BloomRendering.cs" />
-    <Compile Include="Bullet.cs" />
+    <Compile Include="BulletImpactEffect.cs" />
     <Compile Include="Camera.cs" />
-    <Compile Include="CollisionAlgorithms.cs" />
-    <Compile Include="Entity.cs" />
-    <Compile Include="EntityManager.cs" />
+    <Compile Include="DrawableEntity.cs" />
+    <Compile Include="DrawablePlayer.cs" />
     <Compile Include="EntityRenderer.cs" />
     <Compile Include="IDrawable.cs" />
     <Compile Include="FPSCounter.cs" />
@@ -133,13 +132,11 @@
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Player.cs" />
+    <Compile Include="IParticleEffect.cs" />
+    <Compile Include="Particle.cs" />
+    <Compile Include="PlayerExplosionEffect.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Shape.cs" />
-    <Compile Include="SpeedState.cs" />
     <Compile Include="SpriteBuilder.cs" />
-    <Compile Include="TurnState.cs" />
-    <Compile Include="WeaponType.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -173,6 +170,12 @@
     <PackageReference Include="Win2D.uwp">
       <Version>1.23.0</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\GameLogic\GameLogic.csproj">
+      <Project>{6cd86990-a6ed-420e-949d-2beda7bde949}</Project>
+      <Name>GameLogic</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
