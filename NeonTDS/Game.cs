@@ -23,10 +23,9 @@ namespace NeonTDS
         private readonly FPSCounter fpsCounter = new FPSCounter();
         public InputManager InputManager { get; } = new InputManager();
         public Camera Camera { get; } = new Camera();
-        
 
-        EntityManager EntityManager = new EntityManager();
-        EntityRenderer EntityRenderer = new EntityRenderer();
+        readonly EntityManager EntityManager = new EntityManager();
+        readonly EntityRenderer EntityRenderer = new EntityRenderer();
         Player LocalPlayer;
         public string DebugString { get; set; } = "";
 
