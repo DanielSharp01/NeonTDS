@@ -4,12 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UDPServer
+namespace NeonTDS
 {
-    class Message
+    public class ConnectMessage : Message
     {
-       public string MessageID { get; set; }
-
-
+        public string Name { get ; set ; }
     }
 }

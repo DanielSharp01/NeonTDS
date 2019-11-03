@@ -4,17 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace UDPServer
+namespace NeonTDS
 {
-    class ConnectResponseMessage : Message
+    public class ConnectResponseMessage : Message
     {
         public bool Approved { get; set; }
         public string PlayerEntityID { get; set; }
 
-        public ConnectResponseMessage(bool app, string pEID)
+        public ConnectResponseMessage(bool app, string playerEntityID)
         {
             Approved = app;
-            PlayerEntityID = pEID;
+            PlayerEntityID = playerEntityID;
         }
 
     }
