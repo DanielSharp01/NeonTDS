@@ -58,10 +58,16 @@ namespace NeonTDS
             };
 
             Camera.FollowedEntity = LocalPlayer = (Player)EntityManager.Create(new Player(EntityManager) { Color = new Vector4(0, 1, 0, 1), MinSpeed = 0, MaxSpeed = 700, Health = 100 } );
-            EntityManager.Create(new Player(EntityManager) { Color = new Vector4(1, 0, 0, 1), MinSpeed = 0, Direction = 0.4f, MaxSpeed = 700, Speed = 50, Position = new Vector2(100, 0), Health = 100 });
-        }
+            EntityManager.Create(new Player(EntityManager) { Color = new Vector4(1, 0, 0, 1), MinSpeed = 0, Direction = 0, MaxSpeed = 700, Speed = 0, Position = new Vector2(100, 0), Health = 100 });
+			EntityManager.Create(new Player(EntityManager) { Color = new Vector4(1, 0, 0, 1), MinSpeed = 0, Direction = 0, MaxSpeed = 700, Speed = 0, Position = new Vector2(100, 200), Health = 100 });
 
-        public void CreateResources(CanvasAnimatedControl canvas)
+			EntityManager.Create(new SniperPU(EntityManager, Shape.PowerUp) {  Direction = 0, Speed = 0, Position = new Vector2(100, 100)});
+			EntityManager.Create(new RapidPU(EntityManager, Shape.PowerUp) { Direction = 0, Speed = 0, Position = new Vector2(-100, -100) });
+			EntityManager.Create(new ShieldPU(EntityManager, Shape.PowerUp) { Direction = 0, Speed = 0, Position = new Vector2(-100, 0) });
+
+		}
+
+		public void CreateResources(CanvasAnimatedControl canvas)
         {
             bloomRendering.CanvasLoaded(canvas);
             bloomRendering.SetupParameters();

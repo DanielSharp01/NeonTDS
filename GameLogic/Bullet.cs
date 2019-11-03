@@ -11,11 +11,17 @@ namespace NeonTDS
         public Player Owner { get; }
         public Vector2 HitPosition { get; private set; }
 
+		public bool IsSniperBullet { get; set; }
+
+		public int Damage { get; set; }
+
         public Bullet(EntityManager entityManager, Player owner):
             base(entityManager, Shape.Bullet)
         {
             Owner = owner;
             Color = Owner?.Color ?? new Vector4(1, 1, 1, 1);
+			IsSniperBullet = false;
+			
         }
 
         public override void Update(float elapsedTimeSeconds) {
@@ -32,9 +38,11 @@ namespace NeonTDS
                     HitPosition = hitPosition.Value;
                     entity.CollidesWith(this);
                     CollidesWith(entity);
-                    entityManager.Destroy(this);
-                }
+					if(!IsSniperBullet) entityManager.Destroy(this);
+
+				}
             }
+			//if(IsSniperBullet) entityManager.Destroy(this);
         }
 	}
 }

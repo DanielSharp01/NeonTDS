@@ -16,9 +16,12 @@ namespace NeonTDS
             sprites.Add(Shape.Player, SpriteBuilder.RenderFromShape(canvas, 48, 32, Shape.Player));
             sprites.Add(Shape.Turret, SpriteBuilder.RenderFromShape(canvas, 48, 32, Shape.Turret));
             sprites.Add(Shape.Bullet, SpriteBuilder.RenderFromShape(canvas, 24, 4, Shape.Bullet));
-        }
+			sprites.Add(Shape.PowerUp, SpriteBuilder.RenderFromShape(canvas, 48, 32, Shape.PowerUp));
+			sprites.Add(Shape.SniperBullet, SpriteBuilder.RenderFromShape(canvas, 1000, 4, Shape.SniperBullet));
 
-        private readonly Dictionary<Guid, IDrawable> drawables = new Dictionary<Guid, IDrawable>();
+		}
+
+		private readonly Dictionary<Guid, IDrawable> drawables = new Dictionary<Guid, IDrawable>();
 
         public void CreateDrawable(Entity entity)
         {
