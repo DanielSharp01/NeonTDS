@@ -7,7 +7,7 @@ class Program
     static void Main(string[] args)
     {
         //create a new server
-        var server = new UdpListener();
+        var server = new GameServer();
 
         //start listening for messages and copy the messages back to the client
         Task.Factory.StartNew(async () => {
@@ -21,7 +21,7 @@ class Program
         });
 
         //create a new client
-        var client = UdpUser.ConnectTo("127.0.0.1", 32123);
+        var client = PlayerClient.ConnectTo("127.0.0.1", 32123);
 
         //wait for reply messages from server and send them to console 
         Task.Factory.StartNew(async () => {

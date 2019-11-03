@@ -4,16 +4,16 @@ using System.Threading.Tasks;
 
 abstract class UdpBase
 {
-    protected UdpClient Client;
+    protected UdpClient client;
 
     protected UdpBase()
     {
-        Client = new UdpClient();
+        client = new UdpClient();
     }
 
     public async Task<Received> Receive()
     {
-        var result = await Client.ReceiveAsync();
+        var result = await client.ReceiveAsync();
         return new Received()
         {
             Message = Encoding.ASCII.GetString(result.Buffer, 0, result.Buffer.Length),
