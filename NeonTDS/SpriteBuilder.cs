@@ -18,7 +18,7 @@ namespace NeonTDS
         public const int SCALE_FACTOR = 4;
         public CanvasBitmap Bitmap { get; private set; }
 
-        public static CanvasBitmap RenderFromShape(CanvasAnimatedControl canvas, float width, float height, Shape shape, float thickness = 2)
+        public static CanvasBitmap RenderFromShape(CanvasAnimatedControl canvas, float width, float height, Shape shape, float thickness = 2, bool filled = false)
         {
             var renderTarget = new CanvasRenderTarget(canvas, width * SCALE_FACTOR, height * SCALE_FACTOR);
             var pathBuilder = new CanvasPathBuilder(canvas.Device);
@@ -31,7 +31,8 @@ namespace NeonTDS
             pathBuilder.EndFigure(shape.Closed ? CanvasFigureLoop.Closed : CanvasFigureLoop.Open);
             using (var ds = renderTarget.CreateDrawingSession())
             {
-                ds.DrawGeometry(CanvasGeometry.CreatePath(pathBuilder), Colors.White, thickness * SCALE_FACTOR);
+                if (filled) ds.FillGeometry(CanvasGeometry.CreatePath(pathBuilder), Colors.White);
+                else ds.DrawGeometry(CanvasGeometry.CreatePath(pathBuilder), Colors.White, thickness * SCALE_FACTOR);
             }
             return renderTarget;
         }
