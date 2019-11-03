@@ -6,29 +6,34 @@ namespace NeonTDS
 {
     public class EntityManager
     {
-        private HashSet<Entity> creatableEntities = new HashSet<Entity>();
-        private Dictionary<Guid, Entity> entities = new Dictionary<Guid, Entity>();
-        private HashSet<Guid> destroyableEntities = new HashSet<Guid>();
+        private readonly HashSet<Entity> creatableEntities = new HashSet<Entity>();
+        private readonly Dictionary<Guid, Entity> entities = new Dictionary<Guid, Entity>();
+        private readonly HashSet<Guid> destroyableEntities = new HashSet<Guid>();
 
-        private Dictionary<Entity, Guid> entityIds = new Dictionary<Entity, Guid>();
+        private readonly Dictionary<Entity, Guid> entityIds = new Dictionary<Entity, Guid>();
 
         public event Action<Entity> EntityCreated;
         public event Action<Entity> EntityDestroyed;
 
         public IEnumerable<Entity> Entities => entities.Values;
 
-        public IEnumerable<Entity> GetCollidableEntities<T>(T entity) where T: Entity
+        public IEnumerable<Entity> GetCollidableEntities(Entity entity)
         {
-            return GetCollidableEntities<T>();
+            return GetCollidableEntities(entity.GetType());
         }
 
         public IEnumerable<Entity> GetCollidableEntities<T>() where T : Entity
         {
-            if (typeof(T) == typeof(Bullet))
+            return GetCollidableEntities(typeof(T));
+        }
+
+        public IEnumerable<Entity> GetCollidableEntities(Type type)
+        {
+            if (type == typeof(Bullet))
             {
                 return Entities.Where(e => e is Player);
             }
-            else if (typeof(T) == typeof(Player))
+            else if (type == typeof(Player))
             {
                 return Entities.Where(e => e is Player);
             }
