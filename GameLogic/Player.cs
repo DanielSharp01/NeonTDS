@@ -31,10 +31,9 @@ namespace NeonTDS
 
         public bool Firing { get; set; }
 
-        // TODO: Add back
-		/*private bool hasSniper = false;
+		private bool hasSniper = false;
 		private bool hasRapid = false;
-		private bool hasShield = false;*/
+		private bool hasShield = false;
 
 		// private float rapidTimer = 5;
 		// private float DamageModifier = 1;
@@ -165,7 +164,7 @@ namespace NeonTDS
 			else if (other is SniperPU) {
 				hasRapid = false;
 				fireRate = 150;
-				rapidTimer = 5;
+				// rapidTimer = 5;
 				Color = new Vector4(0, 1, 0.5f, 1);
 				hasSniper = true;
 				
