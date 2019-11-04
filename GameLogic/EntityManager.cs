@@ -40,10 +40,11 @@ namespace NeonTDS
             }
             else if (type == typeof(Player))
             {
-                return Entities.Where(e => e is Player);
+                return Entities.Where(e => e is Player || e is PowerUp);
             }
+			
 
-            return Enumerable.Empty<Entity>();
+			return Enumerable.Empty<Entity>();
         }
 
         public Entity Create(Entity entity)

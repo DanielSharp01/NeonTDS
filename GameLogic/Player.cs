@@ -31,6 +31,14 @@ namespace NeonTDS
 
         public bool Firing { get; set; }
 
+        // TODO: Add back
+		/*private bool hasSniper = false;
+		private bool hasRapid = false;
+		private bool hasShield = false;*/
+
+		// private float rapidTimer = 5;
+		// private float DamageModifier = 1;
+
         public WeaponType WeaponType { get; set; }
         public TurnState TurnState { get; set; }
         public SpeedState SpeedState { get; set; }
@@ -101,6 +109,15 @@ namespace NeonTDS
             {
                 FireTimer = 0;
                 entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 2000, Direction = TurretDirection, Color = Color });
+
+                // TODO: Add back
+				/*if (hasSniper) {
+					entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 4000, Direction = TurretDirection, Damage = 200, IsSniperBullet = true, Color = new Vector4(0, 1, 1, 1) });
+					hasSniper = false;
+					Color = new Vector4(0, 1, 0, 1);
+				}
+				else if (hasRapid) entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 2000, Direction = TurretDirection, Damage = 5, Color = new Vector4(1, 1, 0, 1) });
+				else entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 2000, Direction = TurretDirection, Damage = 5 });*/
             }
 
             foreach (Entity entity in entityManager.GetCollidableEntities(this))
@@ -111,6 +128,17 @@ namespace NeonTDS
                     CollidesWith(entity);
                 }
             }
+			
+            // TODO: Add back
+			/*if (hasRapid) {
+				rapidTimer -= elapsedTimeSeconds;
+				if (rapidTimer <= 0) {
+					hasRapid = false;
+					rapidTimer = 5;
+					Color = new Vector4(0, 1, 0, 1);
+					fireRate = 150;
+				}
+			}*/
         }
 
         public void DamagePlayer(int damage)
@@ -124,9 +152,9 @@ namespace NeonTDS
         public override void CollidesWith(Entity other)
         {
             base.CollidesWith(other);
-            if (other is Bullet)
+            if (other is Bullet b)
             {
-                DamagePlayer(5);
+                DamagePlayer(b.Damage);
             }
             else if (other is Player)
             {
@@ -134,6 +162,31 @@ namespace NeonTDS
                 Shield = 0;
                 entityManager.Destroy(this);
             }
-        }
-    }
+			else if (other is SniperPU) {
+				hasRapid = false;
+				fireRate = 150;
+				rapidTimer = 5;
+				Color = new Vector4(0, 1, 0.5f, 1);
+				hasSniper = true;
+				
+			}
+
+			else if (other is RapidPU) {
+				hasSniper = false;
+				Color = new Vector4(1,0.5f,0,1);
+				hasRapid = true;
+				fireRate = 300;
+
+			}
+			else if (other is ShieldPU) {
+				Shield = 100;
+				Color = new Vector4(0, 0, 1, 1);
+			}
+		}
+
+		public override void OnDestroy() {
+			//entityManager.Create(new Player(entityManager) { Color = new Vector4(1, 0, 0, 1), MinSpeed = 0, Direction = 0, MaxSpeed = 700, Speed = 50, Position = new Vector2(100, 0), Health = 100 });
+
+		}
+	}
 }

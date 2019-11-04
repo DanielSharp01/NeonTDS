@@ -20,14 +20,27 @@ namespace NeonTDS
             new Vector2(24, 2)
         }, new Vector2(0, 2), false);
 
-        public static readonly Shape Turret = new Shape(new[] {
+		public static readonly Shape SniperBullet = new Shape(new[] {
+			new Vector2(0, 2),
+			new Vector2(1000, 2)
+		}, new Vector2(0, 2), false);
+
+		public static readonly Shape Turret = new Shape(new[] {
             new Vector2(10, 8),
             new Vector2(10, 24),
             new Vector2(40, 18),
             new Vector2(40, 14)
         }, new Vector2((float)(Math.Sqrt(3) / 6 * 48), 16));
 
-        private readonly List<Vector2> points = new List<Vector2>();
+		public static readonly Shape PowerUp = new Shape(new[] {
+			new Vector2(0, 0),
+			new Vector2(0, 30),
+			new Vector2(30,30),
+			new Vector2(30,0)
+		}, new Vector2(15,15));
+
+
+		private readonly List<Vector2> points = new List<Vector2>();
         public Vector2 Origin { get; }
         public float Radius { get; }
         public bool Closed { get; }

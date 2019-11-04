@@ -83,7 +83,7 @@ namespace NeonTDS
             gameServer.SendConnect(Guid.NewGuid().ToString());
         }
 
-        public void CreateResources(CanvasAnimatedControl canvas)
+		public void CreateResources(CanvasAnimatedControl canvas)
         {
             bloomRendering.CanvasLoaded(canvas);
             bloomRendering.SetupParameters();

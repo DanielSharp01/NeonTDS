@@ -13,10 +13,15 @@ namespace NeonTDS
         [JsonIgnore]
         public Vector2 HitPosition { get; private set; }
 
+		public bool IsSniperBullet { get; set; }
+
+		public int Damage { get; set; }
+
         public Bullet(EntityManager entityManager, Player owner):
             base(entityManager, Shape.Bullet)
         {
             OwnerID = owner?.ID;
+            IsSniperBullet = false;
         }
 
         public override void PostSerialize(EntityManager entityManager)
@@ -40,9 +45,11 @@ namespace NeonTDS
                     HitPosition = hitPosition.Value;
                     entity.CollidesWith(this);
                     CollidesWith(entity);
-                    entityManager.Destroy(this);
-                }
+					if(!IsSniperBullet) entityManager.Destroy(this);
+
+				}
             }
+			//if(IsSniperBullet) entityManager.Destroy(this);
         }
 	}
 }
