@@ -2,8 +2,10 @@
 using Microsoft.Graphics.Canvas.UI;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using System;
+using System.Collections;
 using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.System;
 using Windows.UI;
@@ -36,8 +38,13 @@ namespace NeonTDS
             BloomBlur = 16
         };
 
+        private GameServer gameServer;
+        private readonly object gameStateQueueLock = new object();
+        private Queue gameStateQueue = new Queue();
+
         public void Load()
         {
+            SetupGameConnection();
             EntityManager.EntityCreated += EntityRenderer.CreateDrawable;
             EntityManager.EntityCreated += entity =>
             {
@@ -55,9 +62,25 @@ namespace NeonTDS
             {
                 if (entity is Player) new PlayerExplosionEffect(entity.Position, entity.Color).Spawn(EntityManager);
             };
+        }
 
-            Camera.FollowedEntity = LocalPlayer = (Player)EntityManager.Create(new Player(EntityManager) { Color = new Vector4(0, 1, 0, 1), MinSpeed = 0, MaxSpeed = 700, Health = 100 } );
-            EntityManager.Create(new Player(EntityManager) { Color = new Vector4(1, 0, 0, 1), MinSpeed = 0, Direction = 0.4f, MaxSpeed = 700, Speed = 50, Position = new Vector2(100, 0), Health = 100 });
+        private void SetupGameConnection()
+        {
+            gameServer = new GameServer();
+            gameServer.ConnectResponseRecieved += response =>
+            {
+                if (response.Approved)
+                {
+                    gameServer.GameStateMessageRecieved += gameState =>
+                    {
+                        lock (gameStateQueueLock)
+                        {
+                            gameStateQueue.Enqueue(gameState);
+                        }
+                    };
+                }
+            };
+            gameServer.SendConnect(Guid.NewGuid().ToString());
         }
 
         public void CreateResources(CanvasAnimatedControl canvas)
@@ -72,6 +95,11 @@ namespace NeonTDS
             EntityRenderer.SetupSprites(canvas);
         }
 
+        public void Exit()
+        {
+            gameServer.Disconnect();
+        }
+
         public void SizeChanged(CanvasAnimatedControl canvas, Size newSize, Size previousSize)
         {
             Camera.Size = newSize.ToVector2();
@@ -83,15 +111,22 @@ namespace NeonTDS
             fpsCounter.Update(timing);
             InputManager.Update();
             Matrix3x2.Invert(Camera.Transform, out Matrix3x2 inverse);
-            DebugString = Vector2.Transform(InputManager.MousePosition, inverse).ToString();
-            HandlePlayerInput();
+            if (LocalPlayer != null) HandlePlayerInput();
+
+            lock (gameStateQueueLock)
+            {
+                foreach (GameStateMessage gameState in gameStateQueue)
+                {
+                    HandleGameState(gameState);
+                }
+            }
 
             EntityManager.Update((float)timing.ElapsedTime.TotalSeconds);
             Camera.Update();
             InputManager.AfterUpdate();
         }
 
-        public void HandlePlayerInput()
+        private void HandlePlayerInput()
         {
             var diff = InputManager.CurrentState.MousePosition - Camera.Size / 2;
             LocalPlayer.TurretDirection = (float)Math.Atan2(diff.Y, diff.X);
@@ -121,6 +156,20 @@ namespace NeonTDS
             LocalPlayer.SpeedState = speedState;
 
             LocalPlayer.Firing = InputManager.IsMouseButton(MouseButton.Left, PressState.Down);
+
+            gameServer.SendInput(new InputMessage { Firing = LocalPlayer.Firing, SpeedState = LocalPlayer.SpeedState, TurnState = LocalPlayer.TurnState, TurretDirection = LocalPlayer.TurretDirection });
+        }
+
+        private void HandleGameState(GameStateMessage gameState)
+        {
+            EntityManager.DiffEntities(gameState.Entities);
+            EntityManager.EntityCreated += entity =>
+            {
+                if (LocalPlayer == null && gameState.PlayerEntityID == entity.ID)
+                {
+                    Camera.FollowedEntity = LocalPlayer = (Player)EntityManager.GetEntityById(gameState.PlayerEntityID);
+                }
+            };
         }
 
         public void Draw(CanvasDrawingSession drawingSession, CanvasTimingInformation timing)

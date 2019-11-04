@@ -41,5 +41,28 @@ namespace NeonTDS
             Origin = origin;
             Closed = closed;
         }
+
+        public static string ToString(Shape shape)
+        {
+            if (shape == Shape.Player) return "Player";
+            else if (shape == Shape.Bullet) return "Bullet";
+            else if (shape == Shape.Turret) return "Turret";
+            else return "unknown";
+        }
+
+        public static Shape FromString(string name)
+        {
+            switch (name)
+            {
+                case "Player":
+                    return Shape.Player;
+                case "Bullet":
+                    return Shape.Bullet;
+                case "Turret":
+                    return Shape.Turret;
+                default:
+                    return null;
+            }
+        }
     }
 }

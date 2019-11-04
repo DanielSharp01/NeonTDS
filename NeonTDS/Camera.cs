@@ -18,7 +18,7 @@ namespace NeonTDS
 
         public void Update()
         {
-            Center = FollowedEntity.Position;
+            Center = FollowedEntity?.Position ?? new Vector2(0, 0);
         }
     }
 }

@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace NeonTDS
 {
-    public class Message
+    public class GameStateMessage : Message
     {
-       public string MessageID { get; set; }
+        public string PlayerEntityID { get; set; }
+        public Entity[] Entities { get; set; }
     }
 }

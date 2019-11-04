@@ -12,13 +12,5 @@ namespace NeonTDS
         public TurnState TurnState { get; set; }
         public bool Firing { get; set; }
         public float TurretDirection { get; set; }
-
-        public InputMessage(SpeedState speedState, TurnState turnState, bool firing, float turretDirection)
-        {
-            SpeedState = speedState;
-            TurnState = turnState;
-            Firing = firing;
-            TurretDirection = turretDirection;
-        }
     }
 }

@@ -18,6 +18,13 @@
     <ProjectTypeGuids>{A5A43C5B-DE2A-4C0C-9213-0A381AF9435A};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WindowsXamlEnableOverview>true</WindowsXamlEnableOverview>
     <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
+    <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
+    <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
+    <GenerateTestArtifacts>True</GenerateTestArtifacts>
+    <AppxBundle>Always</AppxBundle>
+    <AppxBundlePlatforms>x86</AppxBundlePlatforms>
+    <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
@@ -125,6 +132,7 @@
     <Compile Include="DrawableEntity.cs" />
     <Compile Include="DrawablePlayer.cs" />
     <Compile Include="EntityRenderer.cs" />
+    <Compile Include="GameServer.cs" />
     <Compile Include="IDrawable.cs" />
     <Compile Include="FPSCounter.cs" />
     <Compile Include="Game.cs" />
@@ -175,6 +183,10 @@
     <ProjectReference Include="..\GameLogic\GameLogic.csproj">
       <Project>{6cd86990-a6ed-420e-949d-2beda7bde949}</Project>
       <Name>GameLogic</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Networking\Networking.csproj">
+      <Project>{78f8c4ad-c91e-4b33-ab60-30483c5e41ad}</Project>
+      <Name>Networking</Name>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">

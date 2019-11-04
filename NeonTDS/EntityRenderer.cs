@@ -18,7 +18,7 @@ namespace NeonTDS
             sprites.Add(Shape.Bullet, SpriteBuilder.RenderFromShape(canvas, 24, 4, Shape.Bullet));
         }
 
-        private readonly Dictionary<Guid, IDrawable> drawables = new Dictionary<Guid, IDrawable>();
+        private readonly Dictionary<string, IDrawable> drawables = new Dictionary<string, IDrawable>();
 
         public void CreateDrawable(Entity entity)
         {

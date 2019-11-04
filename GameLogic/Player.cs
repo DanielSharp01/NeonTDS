@@ -1,25 +1,34 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Numerics;
 
 namespace NeonTDS
 {
     public class Player : Entity
     {
+        public string Name { get; set; }
         public int Health { get; set; }
-        public float MinSpeed { get; set; }
-        public float MaxSpeed { get; set; }
+        [JsonIgnore]
+        public float MinSpeed { get; } = 100;
+        [JsonIgnore]
+        public float MaxSpeed { get; } = 700;
         public int Shield { get; set; }
 
-        private float fireTimer;
+        public float FireTimer { get; set; }
         private int fireRate;
+
         public int FireRate {
             get => fireRate;
             set
             {
-                fireRate = value;
-                fireTimer = 60.0f / fireRate;
+                if (fireRate != value)
+                {
+                    fireRate = value;
+                    FireTimer = 60.0f / fireRate;
+                }
             }
         }
+
         public bool Firing { get; set; }
 
         public WeaponType WeaponType { get; set; }
@@ -27,18 +36,41 @@ namespace NeonTDS
         public SpeedState SpeedState { get; set; }
 
         public float TurretDirection { get; set; }
-        
 
+        [JsonIgnore]
         public Matrix3x2 TurretTransformation => Matrix3x2.CreateTranslation(-Shape.Origin) *
             Matrix3x2.CreateRotation(TurretDirection) *
             Matrix3x2.CreateTranslation(Position);
 
-        public Player(EntityManager entityManager)
+        public Player(EntityManager entityManager, string name)
             : base(entityManager, Shape.Player)
         {
             FireRate = 150;
+            Name = name;
         }
-		
+
+        public override void PostSerialize(EntityManager entityManager)
+        {
+            base.PostSerialize(entityManager);
+            Shape = Shape.Player;
+            CalculateBoundingRadius();
+        }
+
+        public override void UpdateEntity(Entity data)
+        {
+            base.UpdateEntity(data);
+            Player playerData = (Player)data;
+            Health = playerData.Health;
+            Shield = playerData.Shield;
+            FireRate = playerData.FireRate;
+            Firing = playerData.Firing;
+            FireTimer = playerData.FireTimer;
+            WeaponType = playerData.WeaponType;
+            TurnState = playerData.TurnState;
+            SpeedState = playerData.SpeedState;
+            TurretDirection = playerData.TurretDirection;
+        }
+
         public override void Update(float elapsedTimeSeconds)
         {
             if (TurnState == TurnState.Left)
@@ -64,11 +96,11 @@ namespace NeonTDS
             if (Speed > MaxSpeed) Speed = MaxSpeed;
             base.Update(elapsedTimeSeconds);
 
-            fireTimer += elapsedTimeSeconds;
-            if (fireTimer >= (60f / FireRate) && Firing)
+            FireTimer += elapsedTimeSeconds;
+            if (FireTimer >= (60f / FireRate) && Firing)
             {
-                fireTimer = 0;
-                entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 2000, Direction = TurretDirection });
+                FireTimer = 0;
+                entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 2000, Direction = TurretDirection, Color = Color });
             }
 
             foreach (Entity entity in entityManager.GetCollidableEntities(this))

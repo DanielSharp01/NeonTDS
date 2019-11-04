@@ -1,57 +1,121 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
+using System.Numerics;
+using System.Threading;
+using System.Timers;
 
 namespace NeonTDS
 {
     class Program
     {
+        readonly static object entityManagerLock = new object();
+        readonly static object gameClientsLock = new object();
+        readonly static EntityManager entityManager = new EntityManager();
+        readonly static MultiNetworkClient networkClient = new MultiNetworkClient(new UdpClient(new IPEndPoint(IPAddress.Any, 32131)));
+        readonly static Dictionary<IPEndPoint, GameClient> gameClients = new Dictionary<IPEndPoint, GameClient>();
+
         static void Main(string[] args)
         {
-            //create a new server
-            var server = new GameServer();
+            ConnectThread();
+            SetupGameLoop();
+            while (Console.ReadLine() != "exit")
+            { }
+        }
 
-            //start listening for messages and copy the messages back to the client
-            Task.Factory.StartNew(async () =>
+        static void ConnectThread()
+        {
+            networkClient.OnMessageRecieved += message =>
             {
-                while (true)
+                if (message is ConnectMessage connectRequest)
                 {
-                    var received = await server.Receive();
-                    server.Reply("copy " + received.Message, received.Sender);
-                    if (received.Message == "quit")
-                        break;
+                    var distinguishedClient = new DistinguishedNetworkClient(networkClient, message.RemoteEndPoint);
+                    if (gameClients.Values.Select(client => client.Name).Any(s => connectRequest.Name == s))
+                    {
+                        ColorLog(ConsoleColor.Red, "Rejected", " " + connectRequest.Name + " [name taken]");
+                        distinguishedClient.SendMessage(new ConnectResponseMessage { Approved = false });
+                        return;
+                    }
+                    
+                    networkClient.AddClient(distinguishedClient);
+
+                    ColorLog(ConsoleColor.Green, "Connected", " " + connectRequest.Name);
+                    var newPlayer = new Player(entityManager, connectRequest.Name) { Color = new Vector4(1, 1, 1, 1) };
+                    lock (entityManagerLock)
+                    {
+                        entityManager.Create(newPlayer);
+                    }
+                    lock (gameClientsLock)
+                    {
+                        gameClients.Add(message.RemoteEndPoint, new GameClient(distinguishedClient, newPlayer));
+                    }
+                    distinguishedClient.SendMessage(new ConnectResponseMessage { Approved = true, PlayerEntityID = newPlayer.ID });
                 }
-            });
-
-            //create a new client
-            var client = PlayerClient.ConnectTo("127.0.0.1", 32123);
-
-            //wait for reply messages from server and send them to console 
-            Task.Factory.StartNew(async () =>
-            {
-                while (true)
+                else if (message is DisconnectMessage)
                 {
-                    try
+                    if (!gameClients.ContainsKey(message.RemoteEndPoint)) return;
+
+                    ColorLog(ConsoleColor.Red, "Disconnected", " " + gameClients[message.RemoteEndPoint].Name);
+                    lock (gameClientsLock)
                     {
-                        var received = await client.Receive();
-                        Console.WriteLine(received.Message);
-                        if (received.Message.Contains("quit"))
-                            break;
+                        if (gameClients.ContainsKey(message.RemoteEndPoint))
+                        {
+                            lock (entityManagerLock)
+                            {
+                                entityManager.Destroy(gameClients[message.RemoteEndPoint].Player);
+                            }
+                        }
+                        gameClients.Remove(message.RemoteEndPoint);
                     }
-                    catch (Exception ex)
+                    networkClient.RemoveClient(message.RemoteEndPoint);
+                }
+            };
+            networkClient.Listen();
+            ColorLog(ConsoleColor.Green, "Listening", " on port 32131");
+        }
+
+        static void SetupGameLoop()
+        {
+            var timer = new System.Timers.Timer(33);
+            timer.Elapsed += (source, e) =>
+            {
+                lock (entityManagerLock)
+                {
+                    entityManager.Update(0.033f);
+                    long checkTimestamp = DateTime.Now.Ticks;
+
+                    lock (gameClientsLock)
                     {
-                        Debug.Write(ex);
+                        foreach (GameClient client in gameClients.Values.ToList())
+                        {
+                            if (new TimeSpan(checkTimestamp - client.Client.LastMessageTimestasmp).TotalSeconds > 5)
+                            {
+                                ColorLog(ConsoleColor.Red, "Disconnected", " " + gameClients[client.Client.RemoteEndPoint].Name + " [timed out]");
+                                entityManager.Destroy(client.Player);
+                                gameClients.Remove(client.Client.RemoteEndPoint);
+                                networkClient.RemoveClient(client.Client.RemoteEndPoint);
+                                
+                            }
+                            else
+                            {
+                                client.SendGameStateMessage(new GameStateMessage() { PlayerEntityID = client.Player.ID, Entities = entityManager.Entities.ToArray() });
+                            }
+                        }
                     }
                 }
-            });
+            };
+            timer.AutoReset = true;
+            timer.Start();
+        }
 
-            //sending datas for the server
-            string data;
-            do
-            {
-                data = Console.ReadLine();
-                client.Send(data);
-            } while (data != "quit");
+        static void ColorLog(ConsoleColor color, string colored, string normal)
+        {
+            Console.ForegroundColor = color;
+            Console.Write(colored);
+            Console.ResetColor();
+            Console.WriteLine(normal);
         }
     }
 }

@@ -7,15 +7,20 @@ namespace NeonTDS
     public class EntityManager
     {
         private readonly HashSet<Entity> creatableEntities = new HashSet<Entity>();
-        private readonly Dictionary<Guid, Entity> entities = new Dictionary<Guid, Entity>();
-        private readonly HashSet<Guid> destroyableEntities = new HashSet<Guid>();
+        private readonly Dictionary<string, Entity> entities = new Dictionary<string, Entity>();
+        private readonly HashSet<string> destroyableEntities = new HashSet<string>();
 
-        private readonly Dictionary<Entity, Guid> entityIds = new Dictionary<Entity, Guid>();
+        private readonly Dictionary<Entity, string> entityIds = new Dictionary<Entity, string>();
 
         public event Action<Entity> EntityCreated;
         public event Action<Entity> EntityDestroyed;
 
         public IEnumerable<Entity> Entities => entities.Values;
+
+        public Entity GetEntityById(string id)
+        {
+            return entities[id];
+        }
 
         public IEnumerable<Entity> GetCollidableEntities(Entity entity)
         {
@@ -66,15 +71,33 @@ namespace NeonTDS
             {
                 entity.Update(elapsedTimeSeconds);
             }
-            foreach (Guid id in destroyableEntities)
+            foreach (string id in destroyableEntities)
             {
                 EntityDestroyed?.Invoke(entities[id]);
-                entities[id].CleaEvents();
+                entities[id].ClearEvents();
                 entities[id].OnDestroy();
                 entityIds.Remove(entities[id]);
                 entities.Remove(id);
             }
             destroyableEntities.Clear();
+        }
+
+        public void DiffEntities(Entity[] diffEntities)
+        {
+            diffEntities.Select(e => e.ID).ForEach(id => destroyableEntities.Add(id));
+            foreach (Entity entity in diffEntities)
+            {
+                destroyableEntities.Remove(entity.ID);
+                if (!entities.ContainsKey(entity.ID))
+                {
+                    entity.PostSerialize(this);
+                    creatableEntities.Add(entity);
+                }
+                else
+                {
+                    entities[entity.ID].UpdateEntity(entity);
+                }
+            }
         }
     }
 }
