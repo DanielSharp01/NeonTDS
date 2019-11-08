@@ -3,6 +3,7 @@ using Microsoft.Graphics.Canvas.UI;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using System;
 using System.Collections;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -26,7 +27,7 @@ namespace NeonTDS
         public InputManager InputManager { get; } = new InputManager();
         public Camera Camera { get; } = new Camera();
 
-        readonly EntityManager EntityManager = new EntityManager();
+        readonly EntityManager EntityManager = new EntityManager(false);
         readonly EntityRenderer EntityRenderer = new EntityRenderer();
         Player LocalPlayer;
         public string DebugString { get; set; } = "";
@@ -39,24 +40,12 @@ namespace NeonTDS
         };
 
         private GameServer gameServer;
-        private readonly object gameStateQueueLock = new object();
-        private Queue gameStateQueue = new Queue();
+        private readonly Queue gameStateQueue = new Queue();
 
         public void Load()
         {
             SetupGameConnection();
             EntityManager.EntityCreated += EntityRenderer.CreateDrawable;
-            EntityManager.EntityCreated += entity =>
-            {
-                if (entity is Player)
-                {
-                    entity.OnCollisionWith += other =>
-                    {
-                        if (other is Bullet bullet) new BulletImpactEffect(bullet.HitPosition, other.Direction, entity.Color).Spawn(EntityManager);
-                    };
-                }
-            };
-
             EntityManager.EntityDestroyed += EntityRenderer.DestroyDrawable;
             EntityManager.EntityDestroyed += entity =>
             {
@@ -73,7 +62,7 @@ namespace NeonTDS
                 {
                     gameServer.GameStateMessageRecieved += gameState =>
                     {
-                        lock (gameStateQueueLock)
+                        lock (gameStateQueue)
                         {
                             gameStateQueue.Enqueue(gameState);
                         }
@@ -113,12 +102,14 @@ namespace NeonTDS
             Matrix3x2.Invert(Camera.Transform, out Matrix3x2 inverse);
             if (LocalPlayer != null) HandlePlayerInput();
 
-            lock (gameStateQueueLock)
+            lock (gameStateQueue)
             {
+                Debug.WriteLine("Need to process " + gameStateQueue.Count);
                 foreach (GameStateMessage gameState in gameStateQueue)
                 {
                     HandleGameState(gameState);
                 }
+                gameStateQueue.Clear();
             }
 
             EntityManager.Update((float)timing.ElapsedTime.TotalSeconds);

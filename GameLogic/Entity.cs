@@ -24,6 +24,8 @@ namespace NeonTDS
             Matrix3x2.CreateRotation(Direction) *
             Matrix3x2.CreateTranslation(Position);
 
+        public virtual bool IsRenderOnly => false;
+
         public event Action<Entity> OnCollisionWith;
 
         public void ClearEvents()

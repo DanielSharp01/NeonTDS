@@ -10,8 +10,6 @@ namespace NeonTDS
     {
         public Vector2 SpawnPosition { get; set; }
         public string OwnerID { get; set; }
-        [JsonIgnore]
-        public Vector2 HitPosition { get; private set; }
 
 		public bool IsSniperBullet { get; set; }
 
@@ -42,12 +40,11 @@ namespace NeonTDS
 
                 if (hitPosition != null)
                 {
-                    HitPosition = hitPosition.Value;
                     entity.CollidesWith(this);
                     CollidesWith(entity);
+                    new BulletImpactEffect(hitPosition.Value, Direction, entity.Color).Spawn(entityManager);
 					if(!IsSniperBullet) entityManager.Destroy(this);
-
-				}
+                }
             }
 			//if(IsSniperBullet) entityManager.Destroy(this);
         }

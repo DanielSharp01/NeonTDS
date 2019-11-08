@@ -9,6 +9,7 @@ namespace NeonTDS
         private readonly HashSet<Entity> creatableEntities = new HashSet<Entity>();
         private readonly Dictionary<string, Entity> entities = new Dictionary<string, Entity>();
         private readonly HashSet<string> destroyableEntities = new HashSet<string>();
+        private readonly HashSet<string> temporaryEntities = new HashSet<string>();
 
         private readonly Dictionary<Entity, string> entityIds = new Dictionary<Entity, string>();
 
@@ -16,6 +17,13 @@ namespace NeonTDS
         public event Action<Entity> EntityDestroyed;
 
         public IEnumerable<Entity> Entities => entities.Values;
+
+        private readonly bool serverSide;
+
+        public EntityManager(bool serverSide)
+        {
+            this.serverSide = serverSide;
+        }
 
         public Entity GetEntityById(string id)
         {
@@ -49,7 +57,14 @@ namespace NeonTDS
 
         public Entity Create(Entity entity)
         {
-            creatableEntities.Add(entity);
+            if (!serverSide || !entity.IsRenderOnly) creatableEntities.Add(entity);
+            if (!serverSide && !entity.IsRenderOnly)
+            {
+                lock (temporaryEntities)
+                {
+                    temporaryEntities.Add(entity.ID);
+                }
+            }
             return entity;
         }
 
@@ -85,7 +100,17 @@ namespace NeonTDS
 
         public void DiffEntities(Entity[] diffEntities)
         {
-            diffEntities.Select(e => e.ID).ForEach(id => destroyableEntities.Add(id));
+            lock (temporaryEntities)
+            {
+                foreach (string entityKey in temporaryEntities)
+                {
+                    if (entities.ContainsKey(entityKey)) EntityDestroyed?.Invoke(entities[entityKey]);
+                    entities.Remove(entityKey);
+                }
+                temporaryEntities.Clear();
+                creatableEntities.RemoveWhere(e => temporaryEntities.Contains(e.ID));
+            }
+            entities.Values.Select(e => e.ID).ForEach(id => destroyableEntities.Add(id));
             foreach (Entity entity in diffEntities)
             {
                 destroyableEntities.Remove(entity.ID);

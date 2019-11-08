@@ -11,9 +11,7 @@ namespace NeonTDS
 {
     class Program
     {
-        readonly static object entityManagerLock = new object();
-        readonly static object gameClientsLock = new object();
-        readonly static EntityManager entityManager = new EntityManager();
+        readonly static EntityManager entityManager = new EntityManager(true);
         readonly static MultiNetworkClient networkClient = new MultiNetworkClient(new UdpClient(new IPEndPoint(IPAddress.Any, 32131)));
         readonly static Dictionary<IPEndPoint, GameClient> gameClients = new Dictionary<IPEndPoint, GameClient>();
 
@@ -43,11 +41,11 @@ namespace NeonTDS
 
                     ColorLog(ConsoleColor.Green, "Connected", " " + connectRequest.Name);
                     var newPlayer = new Player(entityManager, connectRequest.Name) { Color = new Vector4(1, 1, 1, 1) };
-                    lock (entityManagerLock)
+                    lock (entityManager)
                     {
                         entityManager.Create(newPlayer);
                     }
-                    lock (gameClientsLock)
+                    lock (gameClients)
                     {
                         gameClients.Add(message.RemoteEndPoint, new GameClient(distinguishedClient, newPlayer));
                     }
@@ -58,11 +56,11 @@ namespace NeonTDS
                     if (!gameClients.ContainsKey(message.RemoteEndPoint)) return;
 
                     ColorLog(ConsoleColor.Red, "Disconnected", " " + gameClients[message.RemoteEndPoint].Name);
-                    lock (gameClientsLock)
+                    lock (gameClients)
                     {
                         if (gameClients.ContainsKey(message.RemoteEndPoint))
                         {
-                            lock (entityManagerLock)
+                            lock (entityManager)
                             {
                                 entityManager.Destroy(gameClients[message.RemoteEndPoint].Player);
                             }
@@ -81,13 +79,14 @@ namespace NeonTDS
             var timer = new System.Timers.Timer(33);
             timer.Elapsed += (source, e) =>
             {
-                lock (entityManagerLock)
+                lock (entityManager)
                 {
                     entityManager.Update(0.033f);
                     long checkTimestamp = DateTime.Now.Ticks;
 
-                    lock (gameClientsLock)
+                    lock (gameClients)
                     {
+                        var d = DateTime.Now;
                         foreach (GameClient client in gameClients.Values.ToList())
                         {
                             if (new TimeSpan(checkTimestamp - client.Client.LastMessageTimestasmp).TotalSeconds > 5)
