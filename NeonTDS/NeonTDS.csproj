@@ -129,6 +129,7 @@
     <Compile Include="BloomRendering.cs" />
     <Compile Include="BulletImpactEffect.cs" />
     <Compile Include="Camera.cs" />
+    <Compile Include="Config.cs" />
     <Compile Include="DrawableEntity.cs" />
     <Compile Include="DrawablePlayer.cs" />
     <Compile Include="EntityRenderer.cs" />
@@ -188,6 +189,11 @@
       <Project>{78f8c4ad-c91e-4b33-ab60-30483c5e41ad}</Project>
       <Name>Networking</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

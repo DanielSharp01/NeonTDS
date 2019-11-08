@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -12,11 +15,18 @@ namespace NeonTDS
     class Program
     {
         readonly static EntityManager entityManager = new EntityManager(true);
-        readonly static MultiNetworkClient networkClient = new MultiNetworkClient(new UdpClient(new IPEndPoint(IPAddress.Any, 32131)));
+        static MultiNetworkClient networkClient;
         readonly static Dictionary<IPEndPoint, GameClient> gameClients = new Dictionary<IPEndPoint, GameClient>();
+        static Config config;
+
 
         static void Main(string[] args)
         {
+            using (StreamReader reader = new StreamReader("config.json"))
+            {
+                config = JsonConvert.DeserializeObject<Config>(reader.ReadToEnd());
+                networkClient = new MultiNetworkClient(new UdpClient(new IPEndPoint(IPAddress.Any, config.Port)));
+            }
             ConnectThread();
             SetupGameLoop();
             while (Console.ReadLine() != "exit")
@@ -43,6 +53,7 @@ namespace NeonTDS
                     var newPlayer = new Player(entityManager, connectRequest.Name) { Color = new Vector4(1, 1, 1, 1) };
                     lock (entityManager)
                     {
+                        newPlayer.Position = newPlayer.FindSpawnPosition();
                         entityManager.Create(newPlayer);
                     }
                     lock (gameClients)

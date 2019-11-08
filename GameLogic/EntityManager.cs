@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 
 namespace NeonTDS
 {
@@ -16,13 +17,16 @@ namespace NeonTDS
         public event Action<Entity> EntityCreated;
         public event Action<Entity> EntityDestroyed;
 
+        public const int SpawnSize = 2000;
+        public const int GameSize = 4000;
+
         public IEnumerable<Entity> Entities => entities.Values;
 
-        private readonly bool serverSide;
+        public bool ServerSide { get; }
 
         public EntityManager(bool serverSide)
         {
-            this.serverSide = serverSide;
+            this.ServerSide = serverSide;
         }
 
         public Entity GetEntityById(string id)
@@ -57,8 +61,8 @@ namespace NeonTDS
 
         public Entity Create(Entity entity)
         {
-            if (!serverSide || !entity.IsRenderOnly) creatableEntities.Add(entity);
-            if (!serverSide && !entity.IsRenderOnly)
+            if (!ServerSide || !entity.IsRenderOnly) creatableEntities.Add(entity);
+            if (!ServerSide && !entity.IsRenderOnly)
             {
                 lock (temporaryEntities)
                 {
@@ -86,6 +90,19 @@ namespace NeonTDS
             foreach (Entity entity in entities.Values)
             {
                 entity.Update(elapsedTimeSeconds);
+                if (CollisionAlgorithms.TestLineIntersect(entity, new Vector2(-GameSize, -GameSize), new Vector2(-GameSize, GameSize))
+                    || CollisionAlgorithms.TestLineIntersect(entity, new Vector2(GameSize, -GameSize), new Vector2(GameSize, GameSize))
+                    || CollisionAlgorithms.TestLineIntersect(entity, new Vector2(-GameSize, -GameSize), new Vector2(GameSize, -GameSize))
+                    || CollisionAlgorithms.TestLineIntersect(entity, new Vector2(-GameSize, GameSize), new Vector2(GameSize, GameSize)))
+                {
+                    if (entity is Player player) {
+                        player.InflictDamage(1000);    
+                    }
+                    else
+                    {
+                        Destroy(entity);
+                    }
+                }
             }
             foreach (string id in destroyableEntities)
             {

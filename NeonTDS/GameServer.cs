@@ -10,7 +10,7 @@ namespace NeonTDS
 
         public GameServer()
         {
-            networkClient = new NetworkClient(new UdpClient("192.168.0.206", 32131));
+            networkClient = new NetworkClient(new UdpClient(Game.Config.ServerIP, Game.Config.ServerPort));
             networkClient.OnMessageRecieved += message =>
             {
                 if (message is GameStateMessage gameStateMsg) GameStateMessageRecieved?.Invoke(gameStateMsg);

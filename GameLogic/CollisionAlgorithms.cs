@@ -66,5 +66,17 @@ namespace NeonTDS
 
             return false;
         }
+
+        public static bool TestLineIntersect(Entity entityA, Vector2 start, Vector2 end)
+        {
+            List<Vector2> entityAPoints = entityA.Shape.Points.Select(p => Vector2.Transform(p, entityA.Transformation)).ToList();
+            
+            for (int i = 0; i < entityAPoints.Count - 1; i++)
+            {
+                if (LineSegmentsIntersect(entityAPoints[i], entityAPoints[i + 1], start, end) != null) return true;
+            }
+
+            return false;
+        }
     }
 }

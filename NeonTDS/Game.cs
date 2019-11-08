@@ -1,9 +1,11 @@
 ﻿using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI;
 using Microsoft.Graphics.Canvas.UI.Xaml;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -16,9 +18,13 @@ namespace NeonTDS
     public class Game
     {
         public static Game Instance { get; private set; }
-
+        public static Config Config { get; private set; }
         public Game()
         {
+            using (StreamReader reader = new StreamReader("config.json"))
+            {
+                Config = JsonConvert.DeserializeObject<Config>(reader.ReadToEnd());
+            }
             if (Instance == null) Instance = this;
             else throw new Exception("There can't be more than one game!");
         }
@@ -101,10 +107,9 @@ namespace NeonTDS
             InputManager.Update();
             Matrix3x2.Invert(Camera.Transform, out Matrix3x2 inverse);
             if (LocalPlayer != null) HandlePlayerInput();
-
+            DebugString = LocalPlayer?.Position.ToString();
             lock (gameStateQueue)
             {
-                Debug.WriteLine("Need to process " + gameStateQueue.Count);
                 foreach (GameStateMessage gameState in gameStateQueue)
                 {
                     HandleGameState(gameState);
@@ -156,7 +161,7 @@ namespace NeonTDS
             EntityManager.DiffEntities(gameState.Entities);
             EntityManager.EntityCreated += entity =>
             {
-                if (LocalPlayer == null && gameState.PlayerEntityID == entity.ID)
+                if (gameState.PlayerEntityID == entity.ID)
                 {
                     Camera.FollowedEntity = LocalPlayer = (Player)EntityManager.GetEntityById(gameState.PlayerEntityID);
                 }
@@ -165,20 +170,51 @@ namespace NeonTDS
 
         public void Draw(CanvasDrawingSession drawingSession, CanvasTimingInformation timing)
         {
+            float pulseTime(float period)
+            {
+                float modTime = (float)(timing.TotalTime.TotalMilliseconds % period);
+                if (modTime < period / 2)
+                {
+                    return modTime / (period / 2);
+                }
+                else
+                {
+                    return 1 - (modTime - period / 2) / (period / 2);
+                }
+            }
+
             fpsCounter.Draw(timing);
             using (var ds = bloomRendering.CreateDrawingSession())
             {
                 ds.Clear(Colors.Black);
                 ds.Transform = Camera.Transform;
+                for (float x = -EntityManager.GameSize + 100; x < EntityManager.GameSize; x += 100)
+                {
+                    ds.DrawLine(new Vector2(x, -EntityManager.GameSize), new Vector2(x, EntityManager.GameSize), Color.FromArgb(255, 20, 0, 0), 2);
+                }
+
+                for (float y = -EntityManager.GameSize + 100; y < EntityManager.GameSize; y += 100)
+                {
+                    ds.DrawLine(new Vector2(-EntityManager.GameSize, y), new Vector2(EntityManager.GameSize, y), Color.FromArgb(255, 20, 0, 0), 2);
+                }
+
                 using (var spriteBatch = ds.CreateSpriteBatch())
                 {
                     EntityRenderer.Draw(spriteBatch, timing);
                 }
+
+
+                float pulse = pulseTime(1000);
+
+                ds.DrawLine(new Vector2(-EntityManager.GameSize, -EntityManager.GameSize), new Vector2(-EntityManager.GameSize, EntityManager.GameSize), Colors.OrangeRed, 3 + pulse * 2);
+                ds.DrawLine(new Vector2(EntityManager.GameSize, -EntityManager.GameSize), new Vector2(EntityManager.GameSize, EntityManager.GameSize), Colors.OrangeRed, 3 + pulse * 2);
+                ds.DrawLine(new Vector2(-EntityManager.GameSize, EntityManager.GameSize), new Vector2(EntityManager.GameSize, EntityManager.GameSize), Colors.OrangeRed, 3 + pulse * 2);
+                ds.DrawLine(new Vector2(-EntityManager.GameSize, -EntityManager.GameSize), new Vector2(EntityManager.GameSize, -EntityManager.GameSize), Colors.OrangeRed, 3 + pulse * 2);
             }
 
             bloomRendering.DrawResult(drawingSession);
             drawingSession.DrawText(fpsCounter.FPS.ToString(), Vector2.Zero, Colors.LimeGreen);
-            drawingSession.DrawText(DebugString, new Vector2(0, 32), Colors.DarkRed);
+            drawingSession.DrawText(DebugString ?? "", new Vector2(0, 32), Colors.DarkRed);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Linq;
 using System.Numerics;
 
 namespace NeonTDS
@@ -140,7 +141,7 @@ namespace NeonTDS
 			}*/
         }
 
-        public void DamagePlayer(int damage)
+        public void InflictDamage(int damage)
         {
             int shieldDamage = Math.Min(damage, Shield);
             Shield -= shieldDamage;
@@ -153,7 +154,7 @@ namespace NeonTDS
             base.CollidesWith(other);
             if (other is Bullet b)
             {
-                DamagePlayer(b.Damage);
+                InflictDamage(b.Damage);
             }
             else if (other is Player)
             {
@@ -183,9 +184,39 @@ namespace NeonTDS
 			}
 		}
 
-		public override void OnDestroy() {
-			//entityManager.Create(new Player(entityManager) { Color = new Vector4(1, 0, 0, 1), MinSpeed = 0, Direction = 0, MaxSpeed = 700, Speed = 50, Position = new Vector2(100, 0), Health = 100 });
+        public Vector2 FindSpawnPosition()
+        {
+            Vector2 position;
+            bool SpawnPositionIsWrong()
+            {
+                foreach (Player player in entityManager.Entities.Where(e => e is Player).Cast<Player>())
+                {
+                    if (player == this) continue;
+                    if ((position - player.Position).Length() < 500)
+                    {
+                        return true;
+                    }
+                }
 
+                return false;
+            }
+
+            do
+            {
+                position = new Vector2(GameMath.RandomFloat(-EntityManager.SpawnSize, EntityManager.SpawnSize),
+                    GameMath.RandomFloat(-EntityManager.SpawnSize, EntityManager.SpawnSize));
+            }
+            while (SpawnPositionIsWrong());
+
+            return position;
+        }
+
+		public override void OnDestroy() {
+            if (entityManager.ServerSide)
+            {
+                Position = FindSpawnPosition();
+                entityManager.Create(this);
+            }
 		}
 	}
 }
