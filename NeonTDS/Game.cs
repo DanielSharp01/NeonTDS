@@ -53,10 +53,6 @@ namespace NeonTDS
             SetupGameConnection();
             EntityManager.EntityCreated += EntityRenderer.CreateDrawable;
             EntityManager.EntityDestroyed += EntityRenderer.DestroyDrawable;
-            EntityManager.EntityDestroyed += entity =>
-            {
-                if (entity is Player) new PlayerExplosionEffect(entity.Position, entity.Color).Spawn(EntityManager);
-            };
         }
 
         private void SetupGameConnection()
