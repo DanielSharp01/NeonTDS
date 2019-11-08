@@ -70,7 +70,7 @@ namespace NeonTDS
 
         public void Destroy(Entity entity)
         {
-            destroyableEntities.Add(entityIds[entity]);
+            if (entityIds.ContainsKey(entity)) destroyableEntities.Add(entityIds[entity]);
         }
 
         public void Update(float elapsedTimeSeconds)
@@ -102,15 +102,13 @@ namespace NeonTDS
         {
             lock (temporaryEntities)
             {
-                foreach (string entityKey in temporaryEntities)
-                {
-                    if (entities.ContainsKey(entityKey)) EntityDestroyed?.Invoke(entities[entityKey]);
-                    entities.Remove(entityKey);
-                }
-                temporaryEntities.Clear();
                 creatableEntities.RemoveWhere(e => temporaryEntities.Contains(e.ID));
+                temporaryEntities.Clear();
             }
-            entities.Values.Select(e => e.ID).ForEach(id => destroyableEntities.Add(id));
+            entities.Values.ForEach(e =>
+            {
+                if (!e.IsRenderOnly) destroyableEntities.Add(e.ID);
+            });
             foreach (Entity entity in diffEntities)
             {
                 destroyableEntities.Remove(entity.ID);
