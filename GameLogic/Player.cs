@@ -7,7 +7,7 @@ namespace NeonTDS
     public class Player : Entity
     {
         public string Name { get; set; }
-        public int Health { get; set; }
+        public int Health { get; set; } = 100;
         [JsonIgnore]
         public float MinSpeed { get; } = 100;
         [JsonIgnore]
@@ -107,7 +107,7 @@ namespace NeonTDS
             if (FireTimer >= (60f / FireRate) && Firing)
             {
                 FireTimer = 0;
-                entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 2000, Direction = TurretDirection, Color = Color });
+                entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 2000, Direction = TurretDirection, Color = Color, Damage = 5 });
 
                 // TODO: Add back
 				/*if (hasSniper) {
@@ -145,7 +145,11 @@ namespace NeonTDS
             int shieldDamage = Math.Min(damage, Shield);
             Shield -= shieldDamage;
             Health -= damage - shieldDamage;
-            if (Health < 0) entityManager.Destroy(this);
+            if (Health <= 0)
+            {
+                entityManager.Destroy(this);
+                new PlayerExplosionEffect(Position, Color).Spawn(entityManager);
+            }
         }
 
         public override void CollidesWith(Entity other)
