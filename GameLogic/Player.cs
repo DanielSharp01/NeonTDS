@@ -219,6 +219,7 @@ namespace NeonTDS
             if (entityManager.ServerSide)
             {
                 Position = FindSpawnPosition();
+                Health = 100;
                 entityManager.Create(this);
             }
 		}

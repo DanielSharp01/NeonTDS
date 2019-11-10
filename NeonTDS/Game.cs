@@ -1,4 +1,5 @@
 ﻿using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.Text;
 using Microsoft.Graphics.Canvas.UI;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Newtonsoft.Json;
@@ -209,6 +210,20 @@ namespace NeonTDS
             }
 
             bloomRendering.DrawResult(drawingSession);
+            foreach (var player in EntityManager.Entities.Where(e => e is Player).Cast<Player>())
+            {
+                var playerColor = Color.FromArgb((byte)(player.Color.W * 255), (byte)(player.Color.X * 255), (byte)(player.Color.Y * 255), (byte)(player.Color.Z * 255));
+                var playerPosition = Vector2.Transform(player.Position, Camera.Transform);
+                var textLayout = new CanvasTextLayout(drawingSession, player.Name, new CanvasTextFormat { FontSize = 12 }, 256.0f, 32.0f)
+                {
+                    WordWrapping = CanvasWordWrapping.NoWrap
+                };
+                var textSize = textLayout.LayoutBounds;
+                drawingSession.DrawTextLayout(textLayout, playerPosition - new Vector2((float)(textSize.Width / 2), (float)(textSize.Height / 2 + 64)), playerColor);
+                if (player.Health > 0) drawingSession.FillRectangle(new Rect(playerPosition.X - 32, playerPosition.Y - 48, 64f * player.Health / 100f, 8), playerColor);
+                if (player.Shield > 0) drawingSession.FillRectangle(new Rect(playerPosition.X - 32, playerPosition.Y - 48, 64f * player.Shield / 100f, 8), Colors.Aquamarine);
+            }
+
             drawingSession.DrawText(fpsCounter.FPS.ToString(), Vector2.Zero, Colors.LimeGreen);
             drawingSession.DrawText(DebugString ?? "", new Vector2(0, 32), Colors.DarkRed);
         }
