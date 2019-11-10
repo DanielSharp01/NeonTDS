@@ -18,7 +18,7 @@ namespace NeonTDS
         public event Action<Entity> EntityDestroyed;
 
 
-		private float PowerUpSpawnTimer = 2;
+		private float PowerUpSpawnTimer = 30;
         public const int SpawnSize = 1000;
         public const int GameSize = 2000;
 
@@ -78,25 +78,25 @@ namespace NeonTDS
         {
             if (entityIds.ContainsKey(entity)) destroyableEntities.Add(entityIds[entity]);
         }
-		private void SpawnPowerUp()
+		private void UpdatePowerUps(float elapsedTimeSeconds)
 		{
-			PowerUpSpawnTimer = 2;
-			if (ServerSide)
-			{
-				int valaszto = new Random().Next(1, 4);
-				if (valaszto == 1) this.Create(new ShieldPU(this, Shape.PowerUp));
-				if (valaszto == 2) this.Create(new RapidPU(this, Shape.PowerUp));
-				if (valaszto == 3) this.Create(new SniperPU(this, Shape.PowerUp));
-			}
+            if (!ServerSide) return;
+
+            PowerUpSpawnTimer -= elapsedTimeSeconds;
+            if (PowerUpSpawnTimer <= 0)
+            {
+                int valaszto = new Random().Next(1, 4);
+                if (valaszto == 1) Create(new ShieldPU(this, Shape.PowerUp));
+                if (valaszto == 2) Create(new RapidPU(this, Shape.PowerUp));
+                if (valaszto == 3) Create(new SniperPU(this, Shape.PowerUp));
+                PowerUpSpawnTimer = 30;
+            }
 		}
 
         public void Update(float elapsedTimeSeconds)
         {
-			PowerUpSpawnTimer -= elapsedTimeSeconds;
-			if (PowerUpSpawnTimer <= 0) SpawnPowerUp();
-			
-				
-			
+            UpdatePowerUps(elapsedTimeSeconds);
+
             foreach (Entity entity in creatableEntities)
             {
                 entities.Add(entity.ID, entity);
