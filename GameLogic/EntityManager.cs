@@ -78,16 +78,25 @@ namespace NeonTDS
         {
             if (entityIds.ContainsKey(entity)) destroyableEntities.Add(entityIds[entity]);
         }
+		private void SpawnPowerUp()
+		{
+			PowerUpSpawnTimer = 2;
+			if (ServerSide)
+			{
+				int valaszto = new Random().Next(1, 4);
+				if (valaszto == 1) this.Create(new ShieldPU(this, Shape.PowerUp));
+				if (valaszto == 2) this.Create(new RapidPU(this, Shape.PowerUp));
+				if (valaszto == 3) this.Create(new SniperPU(this, Shape.PowerUp));
+			}
+		}
 
         public void Update(float elapsedTimeSeconds)
         {
 			PowerUpSpawnTimer -= elapsedTimeSeconds;
-			if(PowerUpSpawnTimer <= 0)
-			{
-				PowerUpSpawnTimer = 2;
-				if(ServerSide) this.Create(new SniperPU(this, Shape.PowerUp));
-
-			}
+			if (PowerUpSpawnTimer <= 0) SpawnPowerUp();
+			
+				
+			
             foreach (Entity entity in creatableEntities)
             {
                 entities.Add(entity.ID, entity);

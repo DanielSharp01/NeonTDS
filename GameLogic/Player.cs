@@ -36,8 +36,8 @@ namespace NeonTDS
 		private bool hasRapid = false;
 		private bool hasShield = false;
 
-		// private float rapidTimer = 5;
-		// private float DamageModifier = 1;
+		private float rapidTimer = 5;
+		private float DamageModifier = 1;
 
         public WeaponType WeaponType { get; set; }
         public TurnState TurnState { get; set; }
@@ -108,17 +108,18 @@ namespace NeonTDS
             if (FireTimer >= (60f / FireRate) && Firing)
             {
                 FireTimer = 0;
-                entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 2000, Direction = TurretDirection, Color = Color, Damage = 5 });
+                
 
-                // TODO: Add back
-				/*if (hasSniper) {
+               
+				if (hasSniper) {
 					entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 4000, Direction = TurretDirection, Damage = 200, IsSniperBullet = true, Color = new Vector4(0, 1, 1, 1) });
 					hasSniper = false;
-					Color = new Vector4(0, 1, 0, 1);
+					Color = new Vector4(1, 1, 1, 1);
 				}
-				else if (hasRapid) entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 2000, Direction = TurretDirection, Damage = 5, Color = new Vector4(1, 1, 0, 1) });
-				else entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 2000, Direction = TurretDirection, Damage = 5 });*/
-            }
+				
+				
+				else entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 2000, Direction = TurretDirection, Color = Color, Damage = 5 });
+			}
 
             foreach (Entity entity in entityManager.GetCollidableEntities(this))
             {
@@ -129,16 +130,16 @@ namespace NeonTDS
                 }
             }
 			
-            // TODO: Add back
-			/*if (hasRapid) {
+            
+			if (hasRapid) {
 				rapidTimer -= elapsedTimeSeconds;
 				if (rapidTimer <= 0) {
 					hasRapid = false;
 					rapidTimer = 5;
-					Color = new Vector4(0, 1, 0, 1);
+					Color = new Vector4(1, 1, 1, 1);
 					fireRate = 150;
 				}
-			}*/
+			}
         }
 
         public void InflictDamage(int damage)
@@ -169,7 +170,7 @@ namespace NeonTDS
 			else if (other is SniperPU) {
 				hasRapid = false;
 				fireRate = 150;
-				// rapidTimer = 5;
+				rapidTimer = 5;
 				Color = new Vector4(0, 1, 0.5f, 1);
 				hasSniper = true;
 				
@@ -177,6 +178,7 @@ namespace NeonTDS
 
 			else if (other is RapidPU) {
 				hasSniper = false;
+				rapidTimer = 5;
 				Color = new Vector4(1,0.5f,0,1);
 				hasRapid = true;
 				fireRate = 300;
@@ -184,7 +186,7 @@ namespace NeonTDS
 			}
 			else if (other is ShieldPU) {
 				Shield = 100;
-				Color = new Vector4(0, 0, 1, 1);
+				
 			}
 		}
 
