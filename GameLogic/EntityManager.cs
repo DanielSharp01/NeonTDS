@@ -17,8 +17,8 @@ namespace NeonTDS
         public event Action<Entity> EntityCreated;
         public event Action<Entity> EntityDestroyed;
 
-        public const int SpawnSize = 2000;
-        public const int GameSize = 4000;
+        public const int SpawnSize = 1000;
+        public const int GameSize = 2000;
 
         public IEnumerable<Entity> Entities => entities.Values;
 
