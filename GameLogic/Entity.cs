@@ -38,7 +38,7 @@ namespace NeonTDS
             this.entityManager = entityManager;
             ID = Guid.NewGuid().ToString();
             Shape = shape;
-            CalculateBoundingRadius();            
+            if(shape != null)CalculateBoundingRadius();            
         }
 
         public virtual void PostSerialize(EntityManager entityManager)

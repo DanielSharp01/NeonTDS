@@ -19,6 +19,7 @@ namespace NeonTDS
 
         public const int SpawnSize = 2000;
         public const int GameSize = 4000;
+		private float PowerUpSpawnTimer = 2;
 
         public IEnumerable<Entity> Entities => entities.Values;
 
@@ -79,6 +80,13 @@ namespace NeonTDS
 
         public void Update(float elapsedTimeSeconds)
         {
+			PowerUpSpawnTimer -= elapsedTimeSeconds;
+			if(PowerUpSpawnTimer <= 0)
+			{
+				PowerUpSpawnTimer = 2;
+				if(ServerSide) this.Create(new SniperPU(this, Shape.PowerUp));
+
+			}
             foreach (Entity entity in creatableEntities)
             {
                 entities.Add(entity.ID, entity);

@@ -57,10 +57,11 @@ namespace NeonTDS
 
         public static string ToString(Shape shape)
         {
-            if (shape == Shape.Player) return "Player";
-            else if (shape == Shape.Bullet) return "Bullet";
-            else if (shape == Shape.Turret) return "Turret";
-            else return "unknown";
+			if (shape == Shape.Player) return "Player";
+			else if (shape == Shape.Bullet) return "Bullet";
+			else if (shape == Shape.Turret) return "Turret";
+			else if (shape == Shape.PowerUp) return "PowerUp";
+			else return "unknown";
         }
 
         public static Shape FromString(string name)
@@ -73,6 +74,8 @@ namespace NeonTDS
                     return Shape.Bullet;
                 case "Turret":
                     return Shape.Turret;
+				case "PowerUp":
+					return Shape.PowerUp;
                 default:
                     return null;
             }
