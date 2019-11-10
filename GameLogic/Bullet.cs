@@ -25,7 +25,7 @@ namespace NeonTDS
         public override void PostSerialize(EntityManager entityManager)
         {
             base.PostSerialize(entityManager);
-            Shape = Shape.Player;
+            Shape = Shape.Bullet;
             CalculateBoundingRadius();
         }
 
