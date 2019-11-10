@@ -49,7 +49,7 @@ namespace NeonTDS
                     
                     networkClient.AddClient(distinguishedClient);
 
-                    ColorLog(ConsoleColor.Green, "Connected", " " + connectRequest.Name);
+                    ColorLog(ConsoleColor.Green, "Connected", " " + connectRequest.Name + " from " + connectRequest.RemoteEndPoint.ToString());
                     var newPlayer = new Player(entityManager, connectRequest.Name) { Color = new Vector4(1, 1, 1, 1) };
                     lock (entityManager)
                     {
