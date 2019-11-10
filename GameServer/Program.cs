@@ -82,7 +82,7 @@ namespace NeonTDS
                 }
             };
             networkClient.Listen();
-            ColorLog(ConsoleColor.Green, "Listening", " on port 32131");
+            ColorLog(ConsoleColor.Green, "Listening", $" on port { config.Port }");
         }
 
         static void SetupGameLoop()
