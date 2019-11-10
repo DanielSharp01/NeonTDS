@@ -7,12 +7,18 @@ namespace NeonTDS {
 		public PowerUp(EntityManager entityManager, Shape shape) : base(entityManager, shape) {
 		}
 
-		public override void CollidesWith(Entity other) {
+        public override void PostSerialize(EntityManager entityManager)
+        {
+            base.PostSerialize(entityManager);
+            Shape = Shape.PowerUp;
+            CalculateBoundingRadius();
+        }
+
+        public override void CollidesWith(Entity other) {
 			base.CollidesWith(other);
 			if (other is Player ) {
 				entityManager.Destroy(this);
 			}
-			
 		}
 
 		public override void OnCreate() {
