@@ -42,7 +42,7 @@ namespace NeonTDS
                     var distinguishedClient = new DistinguishedNetworkClient(networkClient, message.RemoteEndPoint);
                     if (gameClients.Values.Select(client => client.Name).Any(s => connectRequest.Name == s))
                     {
-                        ColorLog(ConsoleColor.Red, "Rejected", " " + connectRequest.Name + " [name taken]");
+                        ColorLog(ConsoleColor.Red, "Rejected", " " + connectRequest.Name + " [name taken] from " + connectRequest.RemoteEndPoint.ToString());
                         distinguishedClient.SendMessage(new ConnectResponseMessage { Approved = false });
                         return;
                     }
