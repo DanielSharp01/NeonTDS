@@ -14,7 +14,7 @@ namespace NeonTDS
         public float Speed { get; set; }
         public float Direction { get; set; }
         [JsonIgnore]
-        public Shape Shape { get; protected set; }
+        public Shape Shape { get; /*protected*/ set; }
         [JsonIgnore]
         public float BoundingRadius { get; private set; }
         public Vector4 Color { get; set; }

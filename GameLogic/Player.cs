@@ -81,6 +81,7 @@ namespace NeonTDS
 
         public override void Update(float elapsedTimeSeconds)
         {
+			//InflictDamage(1);  // HP bar testing
             if (TurnState == TurnState.Left)
             {
                 Direction -= (float)(Math.PI * elapsedTimeSeconds);
@@ -112,7 +113,7 @@ namespace NeonTDS
 
                
 				if (hasSniper) {
-					entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 4000, Direction = TurretDirection, Damage = 200, IsSniperBullet = true, Color = new Vector4(0, 1, 1, 1) });
+					entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 0, Direction = TurretDirection, Damage = 200, IsSniperBullet = true, Shape=Shape.SniperBullet, Color = new Vector4(0, 1, 1, 1) });
 					hasSniper = false;
 					Color = new Vector4(1, 1, 1, 1);
 				}
@@ -167,24 +168,27 @@ namespace NeonTDS
                 Shield = 0;
                 entityManager.Destroy(this);
             }
-			else if (other is SniperPU) {
+			else if (other is SniperPU sp) {
+				entityManager.Destroy(sp);
 				hasRapid = false;
 				fireRate = 150;
 				rapidTimer = 5;
-				Color = new Vector4(0, 1, 0.5f, 1);
+				Color = sp.Color;
 				hasSniper = true;
 				
 			}
 
-			else if (other is RapidPU) {
+			else if (other is RapidPU rp) {
+				entityManager.Destroy(rp);
 				hasSniper = false;
 				rapidTimer = 5;
-				Color = new Vector4(1,0.5f,0,1);
+				Color = rp.Color;
 				hasRapid = true;
 				fireRate = 300;
 
 			}
-			else if (other is ShieldPU) {
+			else if (other is ShieldPU s) {
+				entityManager.Destroy(s);
 				Shield = 100;
 				
 			}

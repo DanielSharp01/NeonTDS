@@ -18,7 +18,7 @@ namespace NeonTDS
         public event Action<Entity> EntityDestroyed;
 
 
-		private float PowerUpSpawnTimer = 30;
+		private float PowerUpSpawnTimer = 5;
         public const int SpawnSize = 1000;
         public const int GameSize = 2000;
 
@@ -89,7 +89,7 @@ namespace NeonTDS
                 if (valaszto == 1) Create(new ShieldPU(this, Shape.PowerUp));
                 if (valaszto == 2) Create(new RapidPU(this, Shape.PowerUp));
                 if (valaszto == 3) Create(new SniperPU(this, Shape.PowerUp));
-                PowerUpSpawnTimer = 30;
+                PowerUpSpawnTimer = 5;
             }
 		}
 

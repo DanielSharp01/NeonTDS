@@ -18,9 +18,7 @@ namespace NeonTDS {
 
         public override void CollidesWith(Entity other) {
 			base.CollidesWith(other);
-			if (other is Player ) {
-				entityManager.Destroy(this);
-			}
+			
 		}
 
 		public override void OnCreate() {

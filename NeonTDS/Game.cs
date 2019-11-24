@@ -220,6 +220,7 @@ namespace NeonTDS
                 };
                 var textSize = textLayout.LayoutBounds;
                 drawingSession.DrawTextLayout(textLayout, playerPosition - new Vector2((float)(textSize.Width / 2), (float)(textSize.Height / 2 + 64)), playerColor);
+				drawingSession.DrawRectangle(new Rect(playerPosition.X - 32, playerPosition.Y - 48, 64f, 8), playerColor);
                 if (player.Health > 0) drawingSession.FillRectangle(new Rect(playerPosition.X - 32, playerPosition.Y - 48, 64f * player.Health / 100f, 8), playerColor);
                 if (player.Shield > 0) drawingSession.FillRectangle(new Rect(playerPosition.X - 32, playerPosition.Y - 48, 64f * player.Shield / 100f, 8), Colors.Aquamarine);
             }
