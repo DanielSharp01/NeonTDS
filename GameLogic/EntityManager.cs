@@ -189,7 +189,7 @@ namespace NeonTDS
 
         public void InvokePlayerHealthChanged(Player player, byte reaminingHealth, byte remainingShield)
         {
-            PlayerHealthChanged?.Invoke(player, remainingShield, remainingShield);
+            PlayerHealthChanged?.Invoke(player, reaminingHealth, remainingShield);
         }
     }
 }
