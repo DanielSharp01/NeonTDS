@@ -64,7 +64,7 @@ namespace NeonTDS
                                 Console.Clear();
                                 foreach (KeyValuePair<IPEndPoint, GameClient> kvp in gameClients)
                                 {
-                                    ColorLog("players", ConsoleColor.Cyan, kvp.Value.Player.Name, " from " + kvp.Key.ToString());
+                                    ColorLog("players", ConsoleColor.Cyan, kvp.Value.Player.Name, "(Health=" + kvp.Value.Player.Health + ", Shield=" + kvp.Value.Player.Shield + ", PowerUp=" + Enum.GetName(typeof(PowerUpTypes), kvp.Value.Player.ActivePowerUp) +  ") from " + kvp.Key.ToString());
                                 }
                             };
                             timer.AutoReset = true;
