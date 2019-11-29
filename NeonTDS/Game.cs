@@ -223,6 +223,11 @@ namespace NeonTDS
                     if (!EntityManager.HasEntityWithId(playerState.PlayerID)) return;
                     player = (Player)EntityManager.GetEntityById(playerState.PlayerID);
 
+                    if (player.ID != localPlayerID)
+                    {
+                        player.TurretDirection = playerState.TurretDirection;
+                    }
+
                     player.Position = playerState.Position;
                     player.Direction = playerState.Direction;
                     player.Speed = playerState.Speed;

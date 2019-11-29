@@ -139,9 +139,8 @@ namespace NeonTDS
 			if (ActivePowerUp == PowerUpTypes.RapidFire) {
 				rapidTimer -= elapsedTimeSeconds;
 				if (rapidTimer <= 0) {
-                    ActivePowerUp = PowerUpTypes.RapidFire;
+                    ActivePowerUp = PowerUpTypes.None;
 					rapidTimer = 5;
-					Color = new Vector4(1, 1, 1, 1);
 					fireRate = 150;
 				}
 			}
