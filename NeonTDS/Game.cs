@@ -217,6 +217,7 @@ namespace NeonTDS
                     break;
                 case EntityDestroyMessage entityDestroy:
                     if (!EntityManager.HasEntityWithId(entityDestroy.EntityID)) return;
+                    if (EntityManager.GetEntityById(entityDestroy.EntityID) is Bullet) return;
                     EntityManager.DestroyById(entityDestroy.EntityID, true);
                     break;
                 case PlayerStateMessage playerState:
