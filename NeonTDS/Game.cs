@@ -232,6 +232,7 @@ namespace NeonTDS
                     player = (Player)EntityManager.GetEntityById(playerState.PlayerID);
 
                     player.ChangeHealth(100, 0);
+                    player.ActivePowerUp = PowerUpTypes.None;
                     player.Position = playerState.Position;
                     player.Direction = playerState.Direction;
                     player.Speed = playerState.Speed;

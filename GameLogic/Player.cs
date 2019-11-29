@@ -188,9 +188,7 @@ namespace NeonTDS
             }
             else if (other is Player)
             {
-                Health = 0;
-                Shield = 0;
-                entityManager.Destroy(this);
+                InflictDamage(255);
             }
 			else if (other is PowerUp powerUp) {
                 if (powerUp.Type == PowerUpTypes.Shield)
@@ -202,7 +200,9 @@ namespace NeonTDS
                 {
                     ActivePowerUp = powerUp.Type;
                 }
-			}
+                entityManager.Destroy(powerUp);
+
+            }
 		}
 
         public Vector2 FindSpawnPosition()
@@ -237,6 +237,8 @@ namespace NeonTDS
             {
                 Position = FindSpawnPosition();
                 Health = 100;
+                Shield = 0;
+                ActivePowerUp = PowerUpTypes.None;
                 entityManager.InvokePlayerRespawned(this);
             }
 		}
