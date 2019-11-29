@@ -153,7 +153,10 @@ namespace NeonTDS
                 if (CollisionAlgorithms.TestLineIntersect(entity, new Vector2(-GameSize, -GameSize), new Vector2(-GameSize, GameSize))
                     || CollisionAlgorithms.TestLineIntersect(entity, new Vector2(GameSize, -GameSize), new Vector2(GameSize, GameSize))
                     || CollisionAlgorithms.TestLineIntersect(entity, new Vector2(-GameSize, -GameSize), new Vector2(GameSize, -GameSize))
-                    || CollisionAlgorithms.TestLineIntersect(entity, new Vector2(-GameSize, GameSize), new Vector2(GameSize, GameSize)))
+                    || CollisionAlgorithms.TestLineIntersect(entity, new Vector2(-GameSize, GameSize), new Vector2(GameSize, GameSize))
+                    || (
+                        entity.Position.X < -GameSize ||entity.Position.X > GameSize || entity.Position.Y < -GameSize || entity.Position.Y > GameSize
+                    ))
                 {
                     if (entity is Player player) {
                         player.InflictDamage(255);  

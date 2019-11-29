@@ -220,6 +220,7 @@ namespace NeonTDS
                     EntityManager.DestroyById(entityDestroy.EntityID, true);
                     break;
                 case PlayerStateMessage playerState:
+                    if (!EntityManager.HasEntityWithId(playerState.PlayerID)) return;
                     player = (Player)EntityManager.GetEntityById(playerState.PlayerID);
 
                     player.Position = playerState.Position;
@@ -228,22 +229,25 @@ namespace NeonTDS
                     // TODO: Lag compensation
 
                     break;
-                case PlayerRespawnedMessage playerState:
-                    player = (Player)EntityManager.GetEntityById(playerState.PlayerID);
+                case PlayerRespawnedMessage playerRespawned:
+                    if (!EntityManager.HasEntityWithId(playerRespawned.PlayerID)) return;
+                    player = (Player)EntityManager.GetEntityById(playerRespawned.PlayerID);
 
                     player.ChangeHealth(100, 0);
                     player.ActivePowerUp = PowerUpTypes.None;
-                    player.Position = playerState.Position;
-                    player.Direction = playerState.Direction;
-                    player.Speed = playerState.Speed;
+                    player.Position = playerRespawned.Position;
+                    player.Direction = playerRespawned.Direction;
+                    player.Speed = playerRespawned.Speed;
 
                     break;
                 case HealthMessage healthMessage:
+                    if (!EntityManager.HasEntityWithId(healthMessage.PlayerID)) return;
                     player = (Player)EntityManager.GetEntityById(healthMessage.PlayerID);
                     player.ChangeHealth(healthMessage.Health, healthMessage.Shield);
 
                     break;
                 case PlayerPoweredUpMessage playerPoweredUp:
+                    if (!EntityManager.HasEntityWithId(playerPoweredUp.PlayerID)) return;
                     player = (Player)EntityManager.GetEntityById(playerPoweredUp.PlayerID);
                     player.ActivePowerUp = playerPoweredUp.PowerUpType;
 
