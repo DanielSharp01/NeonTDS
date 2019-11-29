@@ -15,6 +15,7 @@ namespace NeonTDS
         static NetworkServer networkServer;
         readonly static Dictionary<IPEndPoint, GameClient> gameClients = new Dictionary<IPEndPoint, GameClient>();
         static Config config;
+        static string logContext;
 
 
         static void Main(string[] args)
@@ -24,16 +25,65 @@ namespace NeonTDS
                 config = JsonConvert.DeserializeObject<Config>(reader.ReadToEnd());
                 networkServer = new NetworkServer(new UdpClient(new IPEndPoint(IPAddress.Any, config.Port)));
             }
+            logContext = "main";
             ReceiveThread();
             SetupGameLoop();
-            while (Console.ReadLine() != "exit")
-            { }
+            string input;
+            while ((input = Console.ReadLine()) != "exit")
+            {
+                switch (input)
+                {
+                    case "entities":
+                        logContext = "entities";
+ 
+                        using (System.Timers.Timer timer = new System.Timers.Timer(300))
+                        {
+                            timer.Elapsed += (source, e) =>
+                            {
+                                Console.Clear();
+                                foreach (Entity entity in entityManager.Entities)
+                                {
+                                    ColorLog("entities", ConsoleColor.Cyan, entity.ID.ToString(), " " + entity.GetType().ToString());
+                                }
+                            };
+                            timer.AutoReset = true;
+                            timer.Start();
+                            Console.ReadKey();
+                            timer.Stop();
+                        }
+
+                        Console.Clear();
+                        logContext = "main";
+                        break;
+                    case "players":
+                        logContext = "players";
+                        using (System.Timers.Timer timer = new System.Timers.Timer(300))
+                        {
+                            timer.Elapsed += (source, e) =>
+                            {
+                                Console.Clear();
+                                foreach (KeyValuePair<IPEndPoint, GameClient> kvp in gameClients)
+                                {
+                                    ColorLog("players", ConsoleColor.Cyan, kvp.Value.Player.Name, " from " + kvp.Key.ToString());
+                                }
+                            };
+                            timer.AutoReset = true;
+                            timer.Start();
+                            Console.ReadKey();
+                            timer.Stop();
+                        }
+
+                        Console.Clear();
+                        logContext = "main";
+                        break;
+                }
+            }
         }
 
         static void ReceiveThread()
         {
             networkServer.Listen();
-            ColorLog(ConsoleColor.Green, "Listening", $" on port { config.Port }");
+            ColorLog("main", ConsoleColor.Green, "Listening", $" on port { config.Port }");
         }
 
         static EntityData GetEntityDataFor(Entity entity)
@@ -77,6 +127,7 @@ namespace NeonTDS
             entityManager.EntityCreated += (e) =>
             {
                 networkServer.SendQueue.Enqueue(new EntityCreateMessage() { EntityID = e.ID, EntityData = GetEntityDataFor(e), Tick = e.CreationTick.Value });
+
             };
             entityManager.EntityDestroyed += (e) =>
             {
@@ -94,7 +145,7 @@ namespace NeonTDS
             {
                 networkServer.SendQueue.Enqueue(new PlayerRespawnedMessage() { PlayerID = p.ID, Position = p.Position, Direction = p.Direction, Speed = p.Speed, TurretDirection = p.TurretDirection });
             };
-            var timer = new System.Timers.Timer(1.0 / NetworkServer.TickRate);
+            var timer = new System.Timers.Timer(1000.0 / NetworkServer.TickRate);
             timer.Elapsed += (source, e) =>
             {
                 foreach (KeyValuePair<IPEndPoint, Client> kvp in networkServer.Clients)
@@ -106,11 +157,18 @@ namespace NeonTDS
                             gameClients[kvp.Key].KeepAliveTicks++;
                             if (gameClients[kvp.Key].KeepAliveTicks > MaxKeepAliveTicks)
                             {
+                                ColorLog("main", ConsoleColor.Red, "Disconnected", " " + gameClients[kvp.Key].Player.Name + " [timed out] from " + kvp.Key.ToString());
                                 entityManager.Destroy(gameClients[kvp.Key].Player, true);
                                 networkServer.Disconnected(kvp.Key);
                             }
                         }
                     }
+                    else if (gameClients.ContainsKey(kvp.Key))
+                    {
+                        gameClients[kvp.Key].KeepAliveTicks = 0;
+                    }
+
+
                     foreach (Message message in kvp.Value.ReceivedMessages)
                     {
                         if (!gameClients.ContainsKey(kvp.Key) && message is ConnectMessage connectMessage)
@@ -119,6 +177,7 @@ namespace NeonTDS
                             if (approved)
                             {
                                 Player player = (Player)entityManager.Create(new Player(entityManager, connectMessage.Name, connectMessage.Color), true);
+                                ColorLog("main", ConsoleColor.Green, "Connected", " " + connectMessage.Name + " from " + kvp.Key.ToString());
                                 kvp.Value.SendQueue.Enqueue(new ConnectResponseMessage() { Approved = true, PlayerID = player.ID });
                                 gameClients.Add(kvp.Key, new GameClient(kvp.Value, player));
 
@@ -134,11 +193,13 @@ namespace NeonTDS
                             }
                             else
                             {
+                                ColorLog("main", ConsoleColor.Red, "Rejected", " " + connectMessage.Name + " [name taken] from " + kvp.Key.ToString());
                                 networkServer.Disconnected(kvp.Key);
                             }
                         }
                         if (gameClients.ContainsKey(kvp.Key) && message.Type == MessageTypes.Disconnect)
                         {
+                            ColorLog("main", ConsoleColor.Red, "Disconnected", " " + gameClients[kvp.Key].Player.Name + " from " + kvp.Key.ToString());
                             entityManager.Destroy(gameClients[kvp.Key].Player, true);
                             networkServer.Disconnected(kvp.Key);
                         }
@@ -158,6 +219,8 @@ namespace NeonTDS
 
                     // TODO: Send back last acknowledged input #
                 }
+                entityManager.Update(1.0f / NetworkServer.TickRate); 
+                entityManager.Tick();
 
                 foreach (Entity entity in entityManager.Entities)
                 {
@@ -168,14 +231,14 @@ namespace NeonTDS
                 }
 
                 networkServer.SendMessages();
-                entityManager.Tick();
             };
             timer.AutoReset = true;
             timer.Start();
         }
 
-        public static void ColorLog(ConsoleColor color, string colored, string normal)
+        public static void ColorLog(string context, ConsoleColor color, string colored, string normal)
         {
+            if (context != logContext) return;
             Console.ForegroundColor = color;
             Console.Write(colored);
             Console.ResetColor();

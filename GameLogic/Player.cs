@@ -79,6 +79,7 @@ namespace NeonTDS
             FireRate = 150;
             Name = name;
             PlayerColor = playerColor;
+            if (entityManager.ServerSide) Position = FindSpawnPosition();
         }
 
         public override void Update(float elapsedTimeSeconds)

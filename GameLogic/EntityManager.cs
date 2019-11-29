@@ -38,6 +38,11 @@ namespace NeonTDS
             ServerSide = serverSide;
         }
 
+        public bool HasEntityWithId(uint id)
+        {
+            return entities.ContainsKey(id);
+        }
+
         public Entity GetEntityById(uint id)
         {
             return entities[id];
@@ -83,7 +88,7 @@ namespace NeonTDS
                     creatableEntities.Add(entity);
                 }
             }
-            if (!ServerSide && !entity.IsRenderOnly)
+            if (!ServerSide && entity.ID >= uint.MaxValue / 2)
             {
                 lock (temporaryEntities)
                 {
@@ -95,23 +100,28 @@ namespace NeonTDS
 
         public void Destroy(Entity entity, bool bypassQueue = false)
         {
-            if (entities.ContainsKey(entity.ID))
+            DestroyById(entity.ID, bypassQueue);
+        }
+
+        public void DestroyById(uint id, bool bypassQueue = false)
+        {
+            if (entities.ContainsKey(id))
             {
                 if (bypassQueue)
                 {
-                    entities[entity.ID].ClearEvents();
-                    entities[entity.ID].OnDestroy();
-                    EntityDestroyed?.Invoke(entities[entity.ID]);
-                    entities.Remove(entity.ID);
+                    entities[id].ClearEvents();
+                    entities[id].OnDestroy();
+                    EntityDestroyed?.Invoke(entities[id]);
+                    entities.Remove(id);
                 }
                 else
                 {
-                    destroyableEntities.Add(entity.ID);
+                    destroyableEntities.Add(id);
                 }
-                
             }
         }
-		private void UpdatePowerUps(float elapsedTimeSeconds)
+
+        private void UpdatePowerUps(float elapsedTimeSeconds)
 		{
             if (!ServerSide) return;
 
@@ -119,9 +129,9 @@ namespace NeonTDS
             if (PowerUpSpawnTimer <= 0)
             {
                 int valaszto = new Random().Next(1, 4);
-                if (valaszto == 1) Create(new ShieldPU(this, Shape.PowerUp));
-                if (valaszto == 2) Create(new RapidPU(this, Shape.PowerUp));
-                if (valaszto == 3) Create(new SniperPU(this, Shape.PowerUp));
+                if (valaszto == 1) Create(new ShieldPU(this));
+                if (valaszto == 2) Create(new RapidPU(this));
+                if (valaszto == 3) Create(new SniperPU(this));
                 PowerUpSpawnTimer = 5;
             }
 		}
@@ -162,31 +172,6 @@ namespace NeonTDS
                 entities.Remove(id);
             }
             destroyableEntities.Clear();
-        }
-
-        public void DiffEntities(Entity[] diffEntities)
-        {
-            lock (temporaryEntities)
-            {
-                creatableEntities.RemoveWhere(e => temporaryEntities.Contains(e.ID));
-                temporaryEntities.Clear();
-            }
-            entities.Values.ForEach(e =>
-            {
-                if (!e.IsRenderOnly) destroyableEntities.Add(e.ID);
-            });
-            foreach (Entity entity in diffEntities)
-            {
-                destroyableEntities.Remove(entity.ID);
-                if (!entities.ContainsKey(entity.ID))
-                {
-                    creatableEntities.Add(entity);
-                }
-                else
-                {
-                    entities[entity.ID].UpdateEntity(entity);
-                }
-            }
         }
 
         public void InvokePlayerRespawned(Player player)

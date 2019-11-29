@@ -46,7 +46,6 @@ namespace NeonTDS
         };
 
         private GameServer gameServer;
-        private readonly Queue gameStateQueue = new Queue();
 
         public void Load()
         {
@@ -134,6 +133,7 @@ namespace NeonTDS
             LocalPlayer.Firing = InputManager.IsMouseButton(MouseButton.Left, PressState.Down);
 
             gameServer.QueueSend(new PlayerInputMessage { Firing = LocalPlayer.Firing, SpeedState = LocalPlayer.SpeedState, TurnState = LocalPlayer.TurnState, TurretDirection = LocalPlayer.TurretDirection });
+            gameServer.SendAll();
         }
 
         private void HandleServerMessage(Message message)
@@ -145,6 +145,7 @@ namespace NeonTDS
                     case PlayerData playerData:
                         return new Player(EntityManager, playerData.Name, playerData.Color)
                         {
+                            ID = entityCreateMessage.EntityID,
                             Speed = playerData.Speed,
                             Direction = playerData.Direction,
                             ActivePowerUp = playerData.ActivePowerUp,
@@ -156,6 +157,7 @@ namespace NeonTDS
                     case BulletData bulletData:
                         return new Bullet(EntityManager, bulletData.PlayerID)
                         {
+                            ID = entityCreateMessage.EntityID,
                             Color = new Vector4(1, 1, 1, 1), // TODO: From player color
                             IsSniperBullet = false,
                             Direction = bulletData.Direction,
@@ -166,12 +168,24 @@ namespace NeonTDS
                     case RayData rayData:
                         return new Bullet(EntityManager, rayData.PlayerID)
                         {
+                            ID = entityCreateMessage.EntityID,
                             Color = new Vector4(0, 1, 0, 1), // TODO: From player color
                             IsSniperBullet = true,
                             Direction = rayData.Direction,
                             SpawnPosition = rayData.Position,
                             Position = rayData.Position
                         };
+                    case PowerUpData powerUpData:
+                        switch (powerUpData.PowerUpType)
+                        {
+                            case PowerUpTypes.RapidFire:
+                                return new RapidPU(EntityManager) { ID = entityCreateMessage.EntityID, Position = powerUpData.Position };
+                            case PowerUpTypes.RayGun:
+                                return new SniperPU(EntityManager) { ID = entityCreateMessage.EntityID, Position = powerUpData.Position };
+                            case PowerUpTypes.Shield:
+                                return new ShieldPU(EntityManager) { ID = entityCreateMessage.EntityID, Position = powerUpData.Position };
+                        }
+                        return null;
                     case AsteroidData asteroidData:
                         return new Asteroid(EntityManager, Shape.Player); // TODO: Asteroid client side
                 }
@@ -179,7 +193,7 @@ namespace NeonTDS
                 return null;
             }
             Player player;
-
+            Entity entity;
             switch (message)
             {
                 case ConnectResponseMessage connectResponse:
@@ -193,20 +207,34 @@ namespace NeonTDS
                     }
                     break;
                 case EntityCreateMessage entityCreate:
-                    Entity entity = createEntityFromMessage(entityCreate);
+                    if (EntityManager.HasEntityWithId(entityCreate.EntityID)) return;
+                    entity = createEntityFromMessage(entityCreate);
+                    EntityManager.Create(entity, true);
                     if (localPlayerID == entityCreate.EntityID)
                     {
                         Camera.FollowedEntity = LocalPlayer = (Player)entity;
                     }
                     break;
                 case EntityDestroyMessage entityDestroy:
-                    EntityManager.Destroy(EntityManager.GetEntityById(entityDestroy.EntityID));
+                    if (!EntityManager.HasEntityWithId(entityDestroy.EntityID)) return;
+                    EntityManager.DestroyById(entityDestroy.EntityID, true);
                     break;
                 case PlayerStateMessage playerState:
                     player = (Player)EntityManager.GetEntityById(playerState.PlayerID);
-                    
+
+                    player.Position = playerState.Position;
+                    player.Direction = playerState.Direction;
+                    player.Speed = playerState.Speed;
                     // TODO: Lag compensation
 
+                    break;
+                case PlayerRespawnedMessage playerState:
+                    player = (Player)EntityManager.GetEntityById(playerState.PlayerID);
+
+                    player.ChangeHealth(100, 0);
+                    player.Position = playerState.Position;
+                    player.Direction = playerState.Direction;
+                    player.Speed = playerState.Speed;
 
                     break;
                 case HealthMessage healthMessage:

@@ -17,6 +17,7 @@ namespace NeonTDS
         public override void FromBytes(BinaryReader reader)
         {
             base.FromBytes(reader);
+            PlayerID = reader.ReadUInt32();
             Position = new Vector2(reader.ReadSingle(), reader.ReadSingle());
             Direction = reader.ReadSingle();
             Speed = reader.ReadSingle();
@@ -26,6 +27,7 @@ namespace NeonTDS
         public override void ToBytes(BinaryWriter writer)
         {
             base.ToBytes(writer);
+            writer.Write(PlayerID);
             writer.Write(Position.X);
             writer.Write(Position.Y);
             writer.Write(Direction);

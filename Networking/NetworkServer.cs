@@ -61,9 +61,11 @@ namespace NeonTDS
 
         public void SendMessages()
         {
+            List<Message> sendQueue = SendQueue.RetrieveMessages();
             foreach (IPEndPoint clientEndpoint in Clients.Keys) {
-                List<Message> messages = SendQueue.RetrieveMessages();
+                List<Message> messages = new List<Message>();
                 messages.AddRange(Clients[clientEndpoint].SendQueue.RetrieveMessages());
+                messages.AddRange(sendQueue);
                 SendToEndpoint(messages, clientEndpoint);
             }
         }
@@ -72,7 +74,7 @@ namespace NeonTDS
         {
             MemoryStream stream = new MemoryStream();
             Message.ToPackedBytes(stream, messages);
-            var bytes = stream.GetBuffer();
+            var bytes = stream.ToArray();
             try
             {
                 client.Send(bytes, bytes.Length, endpoint);
