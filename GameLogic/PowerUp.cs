@@ -6,6 +6,7 @@ using System.Text;
 namespace NeonTDS {
     public class PowerUp : Entity {
 
+        public float Lifetime = 100;
         public PowerUpTypes Type { get; }
 
 		public PowerUp(EntityManager entityManager, Shape shape, PowerUpTypes type) : base(entityManager, shape) {
@@ -28,7 +29,12 @@ namespace NeonTDS {
 
 		public override void Update(float elapsedTimeSeconds) {
 			base.Update(elapsedTimeSeconds);
-			
+
+            Lifetime -= elapsedTimeSeconds;
+            if (Lifetime < 0)
+            {
+                if (entityManager.ServerSide) entityManager.Destroy(this);
+            }
 		}
 	}
 }

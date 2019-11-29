@@ -128,11 +128,11 @@ namespace NeonTDS
             PowerUpSpawnTimer -= elapsedTimeSeconds;
             if (PowerUpSpawnTimer <= 0)
             {
-                int valaszto = new Random().Next(1, 4);
-                if (valaszto == 1) Create(new ShieldPU(this));
-                if (valaszto == 2) Create(new RapidPU(this));
-                if (valaszto == 3) Create(new SniperPU(this));
-                PowerUpSpawnTimer = 5;
+                int valaszto = new Random().Next(0, 16);
+                if (valaszto <= 8) Create(new ShieldPU(this));
+                if (valaszto > 8 && valaszto <= 14) Create(new RapidPU(this));
+                if (valaszto > 14) Create(new SniperPU(this));
+                PowerUpSpawnTimer = 30;
             }
 		}
 
