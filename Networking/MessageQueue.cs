@@ -8,20 +8,21 @@ namespace NeonTDS
 
         public void Enqueue(Message message)
         {
-            lock (messages)
-            {
+            messages.Enqueue(message);
+        }
+
+        public void Enqueue(List<Message> incomingMessages)
+        {
+            foreach (Message message in incomingMessages) {
                 messages.Enqueue(message);
             }
         }
 
-        public List<Message> GetMessages()
+        public List<Message> RetrieveMessages()
         {
-            lock (messages)
-            {
-                List<Message> ret = new List<Message>(messages.ToArray());
-                messages.Clear();
-                return ret;
-            }
+            List<Message> ret = new List<Message>(messages.ToArray());
+            messages.Clear();
+            return ret;
         }
     }
 }

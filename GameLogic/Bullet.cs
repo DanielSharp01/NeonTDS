@@ -8,25 +8,17 @@ namespace NeonTDS
 {
     public class Bullet : Entity
     {
+        public const int Damage = 10;
         public Vector2 SpawnPosition { get; set; }
-        public string OwnerID { get; set; }
+        public uint OwnerID { get; set; }
 
 		public bool IsSniperBullet { get; set; }
 
-		public int Damage { get; set; }
-
-        public Bullet(EntityManager entityManager, Player owner):
+        public Bullet(EntityManager entityManager, uint ownerID):
             base(entityManager, Shape.Bullet)
         {
-            OwnerID = owner?.ID;
+            OwnerID = ownerID;
             IsSniperBullet = false;
-        }
-
-        public override void PostSerialize(EntityManager entityManager)
-        {
-            base.PostSerialize(entityManager);
-            Shape = Shape.Bullet;
-            CalculateBoundingRadius();
         }
 
         public override void Update(float elapsedTimeSeconds) {

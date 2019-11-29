@@ -7,11 +7,11 @@ namespace NeonTDS
 {
     public class Player : Entity
     {
+        public bool LocalPlayer { get; set; }
+        public byte PlayerColor { get; set; }
         public string Name { get; set; }
-        public int Health { get; set; } = 100;
-        [JsonIgnore]
+        public int Health { get; set; } = 100; 
         public float MinSpeed { get; } = 100;
-        [JsonIgnore]
         public float MaxSpeed { get; } = 700;
         public int Shield { get; set; }
 
@@ -32,12 +32,35 @@ namespace NeonTDS
 
         public bool Firing { get; set; }
 
-		private bool hasSniper = false;
-		private bool hasRapid = false;
-		private bool hasShield = false;
+        private PowerUpTypes activePowerUp = PowerUpTypes.None;
+		public PowerUpTypes ActivePowerUp
+        {
+            get => activePowerUp;
+            set {
+                activePowerUp = value;
+                switch (activePowerUp)
+                {
+                    case PowerUpTypes.None:
+                        Color = new Vector4(1, 1, 1, 1); // TODO: Use byte based player color
+                        fireRate = 150;
+                        rapidTimer = 5;
+                        break;
+                    case PowerUpTypes.RapidFire:
+                        Color = RapidPU.PUColor;
+                        fireRate = 300;
+                        rapidTimer = 5;
+                        break;
+                    case PowerUpTypes.RayGun:
+                        Color = SniperPU.PUColor;
+                        fireRate = 150;
+                        rapidTimer = 5;
+                        break;
+                }
+                if (entityManager.ServerSide) entityManager.InvokePlayerActivePowerUpChanged(this, activePowerUp);
+            }
+        }
 
 		private float rapidTimer = 5;
-		private float DamageModifier = 1;
 
         public WeaponType WeaponType { get; set; }
         public TurnState TurnState { get; set; }
@@ -50,38 +73,16 @@ namespace NeonTDS
             Matrix3x2.CreateRotation(TurretDirection) *
             Matrix3x2.CreateTranslation(Position);
 
-        public Player(EntityManager entityManager, string name)
+        public Player(EntityManager entityManager, string name, byte playerColor)
             : base(entityManager, Shape.Player)
         {
             FireRate = 150;
             Name = name;
-        }
-
-        public override void PostSerialize(EntityManager entityManager)
-        {
-            base.PostSerialize(entityManager);
-            Shape = Shape.Player;
-            CalculateBoundingRadius();
-        }
-
-        public override void UpdateEntity(Entity data)
-        {
-            base.UpdateEntity(data);
-            Player playerData = (Player)data;
-            Health = playerData.Health;
-            Shield = playerData.Shield;
-            FireRate = playerData.FireRate;
-            Firing = playerData.Firing;
-            FireTimer = playerData.FireTimer;
-            WeaponType = playerData.WeaponType;
-            TurnState = playerData.TurnState;
-            SpeedState = playerData.SpeedState;
-            TurretDirection = playerData.TurretDirection;
+            PlayerColor = playerColor;
         }
 
         public override void Update(float elapsedTimeSeconds)
         {
-			//InflictDamage(1);  // HP bar testing
             if (TurnState == TurnState.Left)
             {
                 Direction -= (float)(Math.PI * elapsedTimeSeconds);
@@ -109,17 +110,19 @@ namespace NeonTDS
             if (FireTimer >= (60f / FireRate) && Firing)
             {
                 FireTimer = 0;
-                
 
-               
-				if (hasSniper) {
-					entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 0, Direction = TurretDirection, Damage = 200, IsSniperBullet = true, Shape=Shape.SniperBullet, Color = new Vector4(0, 1, 1, 1) });
-					hasSniper = false;
-					Color = new Vector4(1, 1, 1, 1);
-				}
-				
-				
-				else entityManager.Create(new Bullet(entityManager, this) { Position = Position, Speed = 2000, Direction = TurretDirection, Color = Color, Damage = 5 });
+                if (ActivePowerUp == PowerUpTypes.RayGun)
+                {
+                    if (entityManager.ServerSide)
+                    {
+                        entityManager.Create(new Bullet(entityManager, ID) { Position = Position, Speed = 0, Direction = TurretDirection, IsSniperBullet = true, Shape = Shape.SniperBullet, Color = new Vector4(0, 1, 1, 1) });
+                    }
+                    ActivePowerUp = PowerUpTypes.None;
+                }
+                else if (entityManager.ServerSide)
+                {
+                    entityManager.Create(new Bullet(entityManager, ID) { Position = Position, Speed = 2000, Direction = TurretDirection, Color = Color });
+                }
 			}
 
             foreach (Entity entity in entityManager.GetCollidableEntities(this))
@@ -132,10 +135,10 @@ namespace NeonTDS
             }
 			
             
-			if (hasRapid) {
+			if (ActivePowerUp == PowerUpTypes.RapidFire) {
 				rapidTimer -= elapsedTimeSeconds;
 				if (rapidTimer <= 0) {
-					hasRapid = false;
+                    ActivePowerUp = PowerUpTypes.RapidFire;
 					rapidTimer = 5;
 					Color = new Vector4(1, 1, 1, 1);
 					fireRate = 150;
@@ -145,22 +148,42 @@ namespace NeonTDS
 
         public void InflictDamage(int damage)
         {
-            int shieldDamage = Math.Min(damage, Shield);
-            Shield -= shieldDamage;
-            Health -= damage - shieldDamage;
-            if (Health <= 0)
+            if (entityManager.ServerSide)
             {
-                entityManager.Destroy(this);
-                new PlayerExplosionEffect(Position, Color).Spawn(entityManager);
+                int shieldDamage = Math.Min(damage, Shield);
+                Shield -= shieldDamage;
+                Health -= damage - shieldDamage;
+                entityManager.InvokePlayerHealthChanged(this, (byte)Health, (byte)Shield);
+                if (Health <= 0)
+                {
+                    Respawn();
+                }
+            }
+        }
+
+        public void ChangeHealth(int health, int shield)
+        {
+            if (!entityManager.ServerSide)
+            {
+                Shield = shield;
+                Health = health;
+
+                if (Health <= 0)
+                {
+                    new PlayerExplosionEffect(Position, Color).Spawn(entityManager);
+                }
             }
         }
 
         public override void CollidesWith(Entity other)
         {
             base.CollidesWith(other);
+            if (!entityManager.ServerSide) return;
+           
             if (other is Bullet b)
             {
-                InflictDamage(b.Damage);
+                if (b.IsSniperBullet) InflictDamage(255);
+                else InflictDamage(Bullet.Damage);
             }
             else if (other is Player)
             {
@@ -168,29 +191,16 @@ namespace NeonTDS
                 Shield = 0;
                 entityManager.Destroy(this);
             }
-			else if (other is SniperPU sp) {
-				entityManager.Destroy(sp);
-				hasRapid = false;
-				fireRate = 150;
-				rapidTimer = 5;
-				Color = sp.Color;
-				hasSniper = true;
-				
-			}
-
-			else if (other is RapidPU rp) {
-				entityManager.Destroy(rp);
-				hasSniper = false;
-				rapidTimer = 5;
-				Color = rp.Color;
-				hasRapid = true;
-				fireRate = 300;
-
-			}
-			else if (other is ShieldPU s) {
-				entityManager.Destroy(s);
-				Shield = 100;
-				
+			else if (other is PowerUp powerUp) {
+                if (powerUp.Type == PowerUpTypes.Shield)
+                {
+                    Shield = 100;
+                    entityManager.InvokePlayerHealthChanged(this, (byte)Health, (byte)Shield);
+                }
+                else
+                {
+                    ActivePowerUp = powerUp.Type;
+                }
 			}
 		}
 
@@ -221,12 +231,12 @@ namespace NeonTDS
             return position;
         }
 
-		public override void OnDestroy() {
+		public void Respawn() {
             if (entityManager.ServerSide)
             {
                 Position = FindSpawnPosition();
                 Health = 100;
-                entityManager.Create(this);
+                entityManager.InvokePlayerRespawned(this);
             }
 		}
 	}

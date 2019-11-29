@@ -5,6 +5,7 @@ namespace NeonTDS
 {
     public class PlayerRespawnedMessage : Message
     {
+        public uint PlayerID { get; set; }
         public Vector2 Position { get; set; }
         public float Direction { get; set; }
         public float Speed { get; set; }

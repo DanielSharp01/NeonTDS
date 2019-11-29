@@ -5,7 +5,6 @@ namespace NeonTDS
 {
     public class PlayerInputMessage : Message
     {
-        public uint Timestamp { get; set; }
         [Flags]
         private enum InputFlags {
             Firing = 1,
@@ -28,7 +27,6 @@ namespace NeonTDS
         public override void FromBytes(BinaryReader reader)
         {
             base.FromBytes(reader);
-            Timestamp = reader.ReadUInt32();
             InputFlags flags = (InputFlags)reader.ReadByte();
             Firing = (flags & InputFlags.Firing) != 0;
             TurnState = (flags & InputFlags.TurningLeft) != 0 ? TurnState.Left : (flags & InputFlags.TurningRight) != 0 ? TurnState.Right : TurnState.None;
@@ -39,7 +37,6 @@ namespace NeonTDS
         public override void ToBytes(BinaryWriter writer)
         {
             base.ToBytes(writer);
-            writer.Write(Timestamp);
             InputFlags flags = 0;
             if (Firing) flags |= InputFlags.Firing;
             if (TurnState == TurnState.Left) flags |= InputFlags.TurningLeft;

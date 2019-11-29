@@ -56,6 +56,9 @@ namespace NeonTDS
         public float Direction { get; set; }
         public float Speed { get; set; }
         public float TurretDirection { get; set; }
+        public byte Health { get; set; }
+        public byte Shield { get; set; }
+        public PowerUpTypes ActivePowerUp { get; set; }
         public PlayerData()
             : base(EntityTypes.Player)
         { }
@@ -69,6 +72,9 @@ namespace NeonTDS
             Direction = reader.ReadSingle();
             Speed = reader.ReadSingle();
             TurretDirection = reader.ReadSingle();
+            Health = reader.ReadByte();
+            Shield = reader.ReadByte();
+            ActivePowerUp = (PowerUpTypes)reader.ReadByte();
         }
 
         public override void ToBytes(BinaryWriter writer)
@@ -81,6 +87,9 @@ namespace NeonTDS
             writer.Write(Direction);
             writer.Write(Speed);
             writer.Write(TurretDirection);
+            writer.Write(Health);
+            writer.Write(Shield);
+            writer.Write((byte)ActivePowerUp);
         }
     }
 

@@ -5,11 +5,9 @@ using Microsoft.Graphics.Canvas.UI.Xaml;
 using Newtonsoft.Json;
 using System;
 using System.Collections;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
-using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.System;
 using Windows.UI;
@@ -36,6 +34,7 @@ namespace NeonTDS
 
         readonly EntityManager EntityManager = new EntityManager(false);
         readonly EntityRenderer EntityRenderer = new EntityRenderer();
+        private uint? localPlayerID;
         Player LocalPlayer;
         public string DebugString { get; set; } = "";
 
@@ -59,20 +58,7 @@ namespace NeonTDS
         private void SetupGameConnection()
         {
             gameServer = new GameServer();
-            gameServer.ConnectResponseRecieved += response =>
-            {
-                if (response.Approved)
-                {
-                    gameServer.GameStateMessageRecieved += gameState =>
-                    {
-                        lock (gameStateQueue)
-                        {
-                            gameStateQueue.Enqueue(gameState);
-                        }
-                    };
-                }
-            };
-            gameServer.SendConnect(Guid.NewGuid().ToString());
+            gameServer.SendConnectRequest(Guid.NewGuid().ToString(), 0);
         }
 
 		public void CreateResources(CanvasAnimatedControl canvas)
@@ -105,13 +91,10 @@ namespace NeonTDS
             Matrix3x2.Invert(Camera.Transform, out Matrix3x2 inverse);
             if (LocalPlayer != null) HandlePlayerInput();
             DebugString = LocalPlayer?.Position.ToString();
-            lock (gameStateQueue)
-            {
-                foreach (GameStateMessage gameState in gameStateQueue)
-                {
-                    HandleGameState(gameState);
-                }
-                gameStateQueue.Clear();
+
+            gameServer.ProcessMessages();
+            foreach (Message message in gameServer.ReceivedMessages) {
+                HandleServerMessage(message);
             }
 
             EntityManager.Update((float)timing.ElapsedTime.TotalSeconds);
@@ -150,19 +133,99 @@ namespace NeonTDS
 
             LocalPlayer.Firing = InputManager.IsMouseButton(MouseButton.Left, PressState.Down);
 
-            gameServer.SendInput(new InputMessage { Firing = LocalPlayer.Firing, SpeedState = LocalPlayer.SpeedState, TurnState = LocalPlayer.TurnState, TurretDirection = LocalPlayer.TurretDirection });
+            gameServer.QueueSend(new PlayerInputMessage { Firing = LocalPlayer.Firing, SpeedState = LocalPlayer.SpeedState, TurnState = LocalPlayer.TurnState, TurretDirection = LocalPlayer.TurretDirection });
         }
 
-        private void HandleGameState(GameStateMessage gameState)
+        private void HandleServerMessage(Message message)
         {
-            EntityManager.DiffEntities(gameState.Entities);
-            EntityManager.EntityCreated += entity =>
+            Entity createEntityFromMessage(EntityCreateMessage entityCreateMessage)
             {
-                if (gameState.PlayerEntityID == entity.ID)
+                switch (entityCreateMessage.EntityData)
                 {
-                    Camera.FollowedEntity = LocalPlayer = (Player)EntityManager.GetEntityById(gameState.PlayerEntityID);
+                    case PlayerData playerData:
+                        return new Player(EntityManager, playerData.Name, playerData.Color)
+                        {
+                            Speed = playerData.Speed,
+                            Direction = playerData.Direction,
+                            ActivePowerUp = playerData.ActivePowerUp,
+                            Health = playerData.Health,
+                            Shield = playerData.Shield,
+                            Position = playerData.Position,
+                            TurretDirection = playerData.TurretDirection
+                        };
+                    case BulletData bulletData:
+                        return new Bullet(EntityManager, bulletData.PlayerID)
+                        {
+                            Color = new Vector4(1, 1, 1, 1), // TODO: From player color
+                            IsSniperBullet = false,
+                            Direction = bulletData.Direction,
+                            Speed = bulletData.Speed,
+                            SpawnPosition = bulletData.Position,
+                            Position = bulletData.Position
+                        };
+                    case RayData rayData:
+                        return new Bullet(EntityManager, rayData.PlayerID)
+                        {
+                            Color = new Vector4(0, 1, 0, 1), // TODO: From player color
+                            IsSniperBullet = true,
+                            Direction = rayData.Direction,
+                            SpawnPosition = rayData.Position,
+                            Position = rayData.Position
+                        };
+                    case AsteroidData asteroidData:
+                        return new Asteroid(EntityManager, Shape.Player); // TODO: Asteroid client side
                 }
-            };
+
+                return null;
+            }
+            Player player;
+
+            switch (message)
+            {
+                case ConnectResponseMessage connectResponse:
+                    if (connectResponse.Approved)
+                    {
+                        localPlayerID = connectResponse.PlayerID;
+                    }
+                    else
+                    {
+                        // TODO: Handle
+                    }
+                    break;
+                case EntityCreateMessage entityCreate:
+                    Entity entity = createEntityFromMessage(entityCreate);
+                    if (localPlayerID == entityCreate.EntityID)
+                    {
+                        Camera.FollowedEntity = LocalPlayer = (Player)entity;
+                    }
+                    break;
+                case EntityDestroyMessage entityDestroy:
+                    EntityManager.Destroy(EntityManager.GetEntityById(entityDestroy.EntityID));
+                    break;
+                case PlayerStateMessage playerState:
+                    player = (Player)EntityManager.GetEntityById(playerState.PlayerID);
+                    
+                    // TODO: Lag compensation
+
+
+                    break;
+                case HealthMessage healthMessage:
+                    player = (Player)EntityManager.GetEntityById(healthMessage.PlayerID);
+                    player.ChangeHealth(healthMessage.Health, healthMessage.Shield);
+
+                    break;
+                case PlayerPoweredUpMessage playerPoweredUp:
+                    player = (Player)EntityManager.GetEntityById(playerPoweredUp.PlayerID);
+                    player.ActivePowerUp = playerPoweredUp.PowerUpType;
+
+                    break;
+                case ClockMessage clockMessage:
+                    // TODO: Handle if needed
+                    break;
+                case ShapeCreateMessage shapeCreate:
+                    // TODO: Handle for Asteroids
+                    break;
+            }
         }
 
         public void Draw(CanvasDrawingSession drawingSession, CanvasTimingInformation timing)

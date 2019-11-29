@@ -7,18 +7,25 @@ namespace NeonTDS
 {
     public class EntityManager
     {
-        private readonly HashSet<Entity> creatableEntities = new HashSet<Entity>();
-        private readonly Dictionary<string, Entity> entities = new Dictionary<string, Entity>();
-        private readonly HashSet<string> destroyableEntities = new HashSet<string>();
-        private readonly HashSet<string> temporaryEntities = new HashSet<string>();
+        public uint Clock { get; private set; } = 0;
 
-        private readonly Dictionary<Entity, string> entityIds = new Dictionary<Entity, string>();
+        public void Tick()
+        {
+            Clock++;
+        }
+
+        private readonly HashSet<Entity> creatableEntities = new HashSet<Entity>();
+        private readonly Dictionary<uint, Entity> entities = new Dictionary<uint, Entity>();
+        private readonly HashSet<uint> destroyableEntities = new HashSet<uint>();
+        private readonly HashSet<uint> temporaryEntities = new HashSet<uint>();
 
         public event Action<Entity> EntityCreated;
         public event Action<Entity> EntityDestroyed;
+        public event Action<Player> PlayerRespawned;
+        public event Action<Player, PowerUpTypes> PlayerActivePowerUpChanged;
+        public event Action<Player, byte, byte> PlayerHealthChanged;
 
-
-		private float PowerUpSpawnTimer = 5;
+        private float PowerUpSpawnTimer = 5;
         public const int SpawnSize = 1000;
         public const int GameSize = 2000;
 
@@ -28,10 +35,10 @@ namespace NeonTDS
 
         public EntityManager(bool serverSide)
         {
-            this.ServerSide = serverSide;
+            ServerSide = serverSide;
         }
 
-        public Entity GetEntityById(string id)
+        public Entity GetEntityById(uint id)
         {
             return entities[id];
         }
@@ -61,9 +68,21 @@ namespace NeonTDS
 			return Enumerable.Empty<Entity>();
         }
 
-        public Entity Create(Entity entity)
+        public Entity Create(Entity entity, bool bypassQueue = false)
         {
-            if (!ServerSide || !entity.IsRenderOnly) creatableEntities.Add(entity);
+            if (!ServerSide || !entity.IsRenderOnly)
+            {
+                if (bypassQueue)
+                {
+                    entities.Add(entity.ID, entity);
+                    entity.OnCreate();
+                    EntityCreated?.Invoke(entity);
+                }
+                else
+                {
+                    creatableEntities.Add(entity);
+                }
+            }
             if (!ServerSide && !entity.IsRenderOnly)
             {
                 lock (temporaryEntities)
@@ -74,9 +93,23 @@ namespace NeonTDS
             return entity;
         }
 
-        public void Destroy(Entity entity)
+        public void Destroy(Entity entity, bool bypassQueue = false)
         {
-            if (entityIds.ContainsKey(entity)) destroyableEntities.Add(entityIds[entity]);
+            if (entities.ContainsKey(entity.ID))
+            {
+                if (bypassQueue)
+                {
+                    entities[entity.ID].ClearEvents();
+                    entities[entity.ID].OnDestroy();
+                    EntityDestroyed?.Invoke(entities[entity.ID]);
+                    entities.Remove(entity.ID);
+                }
+                else
+                {
+                    destroyableEntities.Add(entity.ID);
+                }
+                
+            }
         }
 		private void UpdatePowerUps(float elapsedTimeSeconds)
 		{
@@ -100,9 +133,8 @@ namespace NeonTDS
             foreach (Entity entity in creatableEntities)
             {
                 entities.Add(entity.ID, entity);
-                entityIds.Add(entity, entity.ID);
-                EntityCreated?.Invoke(entity);
                 entity.OnCreate();
+                EntityCreated?.Invoke(entity);
             }
             creatableEntities.Clear();
             foreach (Entity entity in entities.Values)
@@ -114,7 +146,7 @@ namespace NeonTDS
                     || CollisionAlgorithms.TestLineIntersect(entity, new Vector2(-GameSize, GameSize), new Vector2(GameSize, GameSize)))
                 {
                     if (entity is Player player) {
-                        player.InflictDamage(1000);    
+                        player.InflictDamage(255);  
                     }
                     else
                     {
@@ -122,12 +154,11 @@ namespace NeonTDS
                     }
                 }
             }
-            foreach (string id in destroyableEntities)
+            foreach (uint id in destroyableEntities)
             {
-                EntityDestroyed?.Invoke(entities[id]);
                 entities[id].ClearEvents();
                 entities[id].OnDestroy();
-                entityIds.Remove(entities[id]);
+                EntityDestroyed?.Invoke(entities[id]);
                 entities.Remove(id);
             }
             destroyableEntities.Clear();
@@ -149,7 +180,6 @@ namespace NeonTDS
                 destroyableEntities.Remove(entity.ID);
                 if (!entities.ContainsKey(entity.ID))
                 {
-                    entity.PostSerialize(this);
                     creatableEntities.Add(entity);
                 }
                 else
@@ -157,6 +187,21 @@ namespace NeonTDS
                     entities[entity.ID].UpdateEntity(entity);
                 }
             }
+        }
+
+        public void InvokePlayerRespawned(Player player)
+        {
+            PlayerRespawned?.Invoke(player);
+        }
+
+        public void InvokePlayerActivePowerUpChanged(Player player, PowerUpTypes powerUpType)
+        {
+            PlayerActivePowerUpChanged?.Invoke(player, powerUpType);
+        }
+
+        public void InvokePlayerHealthChanged(Player player, byte reaminingHealth, byte remainingShield)
+        {
+            PlayerHealthChanged?.Invoke(player, remainingShield, remainingShield);
         }
     }
 }

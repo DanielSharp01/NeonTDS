@@ -1,16 +1,36 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Net;
 
 namespace NeonTDS
 {
     public class Message
     {
-        public MessageTypes Type { get; set; }
-        public IPEndPoint RemoteEndPoint { get; set; }
+        public MessageTypes Type { get; }
 
-        protected Message(MessageTypes type)
+        public Message(MessageTypes type)
         {
             Type = type;
+        }
+
+        public static void ToPackedBytes(Stream stream, List<Message> messages)
+        {
+            BinaryWriter writer = new BinaryWriter(stream);
+            foreach (Message message in messages)
+            {
+                message.ToBytes(writer);
+            }
+        }
+
+        public static List<Message> FromPackedBytes(Stream stream)
+        {
+            List<Message> messages = new List<Message>();
+            BinaryReader reader = new BinaryReader(stream);
+            while (stream.Position != stream.Length)
+            {
+                messages.Add(GetFromBytes(reader));
+            }
+            return messages;
         }
 
         public static Message GetFromBytes(BinaryReader reader)
@@ -24,11 +44,14 @@ namespace NeonTDS
                 case MessageTypes.Connect:
                     message = new ConnectMessage();
                     break;
+                case MessageTypes.Disconnect:
+                    message = new Message(MessageTypes.Disconnect);
+                    break;
                 case MessageTypes.ConnectResponse:
                     message = new ConnectResponseMessage();
                     break;
                 case MessageTypes.Damage:
-                    message = new DamageMessage();
+                    message = new HealthMessage();
                     break;
                 case MessageTypes.EntityCreate:
                     message = new EntityCreateMessage();

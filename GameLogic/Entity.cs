@@ -8,18 +8,19 @@ namespace NeonTDS
 {
     public class Entity
     {
+        public static uint NextID = 0;
         protected EntityManager entityManager;
-        public string ID { get; set; }
+        public uint ID { get; set; }
         public Vector2 Position { get; set; }
         public float Speed { get; set; }
         public float Direction { get; set; }
-        [JsonIgnore]
         public Shape Shape { get; /*protected*/ set; }
-        [JsonIgnore]
         public float BoundingRadius { get; private set; }
         public Vector4 Color { get; set; }
 
-        [JsonIgnore]
+        public uint? CreationTick { get; set; } = null;
+        public uint? DestructionTick { get; set; } = null;
+
         public Matrix3x2 Transformation => Matrix3x2.CreateTranslation(-Shape.Origin) *
             Matrix3x2.CreateRotation(Direction) *
             Matrix3x2.CreateTranslation(Position);
@@ -36,14 +37,13 @@ namespace NeonTDS
         public Entity(EntityManager entityManager, Shape shape)
         {
             this.entityManager = entityManager;
-            ID = Guid.NewGuid().ToString();
-            Shape = shape;
-            if (shape != null) CalculateBoundingRadius();
-        }
+            
+            // Only allow half the IDs for each side make them rollover
+            ID = NextID++ + (entityManager.ServerSide ? 0 : uint.MaxValue / 2);
+            NextID %= uint.MaxValue;
 
-        public virtual void PostSerialize(EntityManager entityManager)
-        {
-            this.entityManager = entityManager;
+            Shape = shape;
+            CalculateBoundingRadius();
         }
 
         public virtual void UpdateEntity(Entity data)
@@ -56,12 +56,18 @@ namespace NeonTDS
 
         public virtual void OnCreate()
         {
-
+            if (entityManager.ServerSide)
+            {
+                CreationTick = entityManager.Clock;
+            }
         }
 
         public virtual void OnDestroy()
         {
-
+            if (entityManager.ServerSide)
+            {
+                DestructionTick = entityManager.Clock;
+            }
         }
 
         public void CalculateBoundingRadius()

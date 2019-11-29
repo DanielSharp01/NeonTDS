@@ -4,7 +4,7 @@ namespace NeonTDS
 {
     public class EntityCreateMessage : Message
     {
-        public uint Timestamp { get; set; }
+        public uint Tick { get; set; }
         public uint EntityID { get; set; }
         public EntityData EntityData { get; set; }
         public EntityCreateMessage()
@@ -14,7 +14,7 @@ namespace NeonTDS
         public override void FromBytes(BinaryReader reader)
         {
             base.FromBytes(reader);
-            Timestamp = reader.ReadUInt32();
+            Tick = reader.ReadUInt32();
             EntityID = reader.ReadUInt32();
             EntityData = EntityData.GetFromBytes(reader);
         }
@@ -22,7 +22,7 @@ namespace NeonTDS
         public override void ToBytes(BinaryWriter writer)
         {
             base.ToBytes(writer);
-            writer.Write(Timestamp);
+            writer.Write(Tick);
             writer.Write(EntityID);
             EntityData.ToBytes(writer);
         }

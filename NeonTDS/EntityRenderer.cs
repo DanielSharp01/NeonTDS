@@ -21,7 +21,7 @@ namespace NeonTDS
 
 		}
 
-        private readonly Dictionary<string, IDrawable> drawables = new Dictionary<string, IDrawable>();
+        private readonly Dictionary<uint, IDrawable> drawables = new Dictionary<uint, IDrawable>();
 
         public void CreateDrawable(Entity entity)
         {

@@ -1,26 +1,18 @@
-﻿using NeonTDS;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace NeonTDS
 {
-    public class NetworkClient: IDisposable
+    public class NetworkClient : IDisposable
     {
-        private static readonly JsonSerializerSettings serializerSettings = new JsonSerializerSettings()
-        {
-            TypeNameHandling = TypeNameHandling.All
-        };
-
         private UdpClient client;
 
-        public MessageQueue RecieveQueue { get; } = new MessageQueue();
+        public List<byte> ReceiveQueue { get; } = new List<byte>();
+
+        public List<Message> ReceivedMessages { get; private set; } = null;
         public MessageQueue SendQueue { get; } = new MessageQueue();
 
         public NetworkClient(UdpClient client)
@@ -36,7 +28,7 @@ namespace NeonTDS
                 {
                     try
                     {
-                        await RecieveMessage();
+                        await ReceiveMessages();
                     }
                     catch (Exception)
                     {
@@ -46,25 +38,48 @@ namespace NeonTDS
             });
         }
 
-        public void SendMessages(IPEndPoint remoteEndPoint = null)
+        public void SendMessage(Message message)
         {
             MemoryStream stream = new MemoryStream();
-            MessageUtils.StreamFromMessageQueue(stream, SendQueue);
+            Message.ToPackedBytes(stream, new List<Message>() { message });
             var bytes = stream.GetBuffer();
             try
             {
-                if (remoteEndPoint != null) client.Send(, bytes.Length, remoteEndPoint);
-                else
-                    client.Send(bytes, bytes.Length);
+                client.Send(bytes, bytes.Length);
             }
             catch (Exception) { }
         }
 
-        public async Task RecieveMessage()
+        public void SendMessages()
         {
-            var recieved = await client.ReceiveAsync();
-            MemoryStream stream = new MemoryStream(recieved.Buffer);
-            MessageUtils.StreamToMessageQueue(stream, RecieveQueue);
+            MemoryStream stream = new MemoryStream();
+            Message.ToPackedBytes(stream, SendQueue.RetrieveMessages());
+            var bytes = stream.GetBuffer();
+            try
+            {
+                client.Send(bytes, bytes.Length);
+            }
+            catch (Exception) { }
+        }
+
+        private async Task ReceiveMessages()
+        {
+            var received = await client.ReceiveAsync();
+            lock (ReceiveQueue)
+            {
+                ReceiveQueue.AddRange(received.Buffer);
+            }
+        }
+
+        public void ProcessMessages()
+        {
+            MemoryStream stream;
+            lock (ReceiveQueue)
+            {
+                stream = new MemoryStream(ReceiveQueue.ToArray());
+                ReceiveQueue.Clear();
+            }
+            ReceivedMessages = Message.FromPackedBytes(stream);
         }
 
         public void Dispose()
@@ -73,22 +88,4 @@ namespace NeonTDS
             client.Dispose();
         }
     }
-
-    public class DistinguishedNetworkClient
-    {
-        private NetworkClient mainClient;
-        public IPEndPoint RemoteEndPoint { get; }
-
-        public DistinguishedNetworkClient(NetworkClient mainClient, IPEndPoint remoteEndPoint)
-        {
-            this.mainClient = mainClient;
-            RemoteEndPoint = remoteEndPoint;
-        }
-
-        public void SendMessages()
-        {
-            mainClient.SendMessages(RemoteEndPoint);
-        }
-    }
-
 }

@@ -1,21 +1,18 @@
 ﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Numerics;
-using System.Threading;
-using System.Timers;
 
 namespace NeonTDS
 {
     class Program
     {
+        public const int MaxKeepAliveTicks = 100;
+
         readonly static EntityManager entityManager = new EntityManager(true);
-        static MultiNetworkClient networkClient;
+        static NetworkServer networkServer;
         readonly static Dictionary<IPEndPoint, GameClient> gameClients = new Dictionary<IPEndPoint, GameClient>();
         static Config config;
 
@@ -25,107 +22,174 @@ namespace NeonTDS
             using (StreamReader reader = new StreamReader("config.json"))
             {
                 config = JsonConvert.DeserializeObject<Config>(reader.ReadToEnd());
-                networkClient = new MultiNetworkClient(new UdpClient(new IPEndPoint(IPAddress.Any, config.Port)));
+                networkServer = new NetworkServer(new UdpClient(new IPEndPoint(IPAddress.Any, config.Port)));
             }
-            ConnectThread();
+            ReceiveThread();
             SetupGameLoop();
             while (Console.ReadLine() != "exit")
             { }
         }
 
-        static void ConnectThread()
+        static void ReceiveThread()
         {
-            networkClient.OnMessageRecieved += message =>
-            {
-                if (message is ConnectMessage connectRequest)
-                {
-                    var distinguishedClient = new DistinguishedNetworkClient(networkClient, message.RemoteEndPoint);
-                    if (gameClients.Values.Select(client => client.Name).Any(s => connectRequest.Name == s))
-                    {
-                        ColorLog(ConsoleColor.Red, "Rejected", " " + connectRequest.Name + " [name taken] from " + connectRequest.RemoteEndPoint.ToString());
-                        distinguishedClient.SendMessage(new ConnectResponseMessage { Approved = false });
-                        return;
-                    }
-                    
-                    networkClient.AddClient(distinguishedClient);
-
-                    ColorLog(ConsoleColor.Green, "Connected", " " + connectRequest.Name + " from " + connectRequest.RemoteEndPoint.ToString());
-                    var newPlayer = new Player(entityManager, connectRequest.Name) { Color = new Vector4(1, 1, 1, 1) };
-                    lock (entityManager)
-                    {
-                        newPlayer.Position = newPlayer.FindSpawnPosition();
-                        entityManager.Create(newPlayer);
-                    }
-                    lock (gameClients)
-                    {
-                        gameClients.Add(message.RemoteEndPoint, new GameClient(distinguishedClient, newPlayer));
-                    }
-                    distinguishedClient.SendMessage(new ConnectResponseMessage { Approved = true, PlayerEntityID = newPlayer.ID });
-                }
-                else if (message is DisconnectMessage)
-                {
-                    if (!gameClients.ContainsKey(message.RemoteEndPoint)) return;
-
-                    ColorLog(ConsoleColor.Red, "Disconnected", " " + gameClients[message.RemoteEndPoint].Name);
-                    lock (gameClients)
-                    {
-                        if (gameClients.ContainsKey(message.RemoteEndPoint))
-                        {
-                            lock (entityManager)
-                            {
-                                entityManager.Destroy(gameClients[message.RemoteEndPoint].Player);
-                            }
-                        }
-                        gameClients.Remove(message.RemoteEndPoint);
-                    }
-                    networkClient.RemoveClient(message.RemoteEndPoint);
-                }
-            };
-            networkClient.Listen();
+            networkServer.Listen();
             ColorLog(ConsoleColor.Green, "Listening", $" on port { config.Port }");
+        }
+
+        static EntityData GetEntityDataFor(Entity entity)
+        {
+            switch (entity)
+            {
+                case Player player:
+                    return new PlayerData() {
+                        Name = player.Name,
+                        Color = player.PlayerColor,
+                        Direction = player.Direction,
+                        Speed = player.Speed,
+                        Position = player.Position,
+                        TurretDirection = player.TurretDirection,
+                        Health = (byte)player.Health,
+                        Shield = (byte)player.Shield,
+                        ActivePowerUp = player.ActivePowerUp
+                    };
+                case Bullet bullet:
+                    return new BulletData()
+                    {
+                        Direction = bullet.Direction,
+                        Speed = bullet.Speed,
+                        Position = bullet.Position,
+                        PlayerID = bullet.OwnerID
+                    };
+                case PowerUp powerUp:
+                    return new PowerUpData()
+                    {
+                        PowerUpType = powerUp.Type,
+                        Position = powerUp.Position
+                    };
+                //TODO: case Asteroid asteroid:
+            }
+
+            return null;
         }
 
         static void SetupGameLoop()
         {
-            var timer = new System.Timers.Timer(33);
+            entityManager.EntityCreated += (e) =>
+            {
+                networkServer.SendQueue.Enqueue(new EntityCreateMessage() { EntityID = e.ID, EntityData = GetEntityDataFor(e), Tick = e.CreationTick.Value });
+            };
+            entityManager.EntityDestroyed += (e) =>
+            {
+                networkServer.SendQueue.Enqueue(new EntityDestroyMessage() { EntityID = e.ID, Tick = e.DestructionTick.Value });
+            };
+            entityManager.PlayerHealthChanged += (p, remainingHealth, remainingShield) =>
+            {
+                networkServer.SendQueue.Enqueue(new HealthMessage() { PlayerID = p.ID, Health = remainingHealth, Shield = remainingShield });
+            };
+            entityManager.PlayerActivePowerUpChanged += (p, powerUpType) =>
+            {
+                networkServer.SendQueue.Enqueue(new PlayerPoweredUpMessage() { PlayerID = p.ID, PowerUpType = powerUpType });
+            };
+            entityManager.PlayerRespawned += (p) =>
+            {
+                networkServer.SendQueue.Enqueue(new PlayerRespawnedMessage() { PlayerID = p.ID, Position = p.Position, Direction = p.Direction, Speed = p.Speed, TurretDirection = p.TurretDirection });
+            };
+            var timer = new System.Timers.Timer(1.0 / NetworkServer.TickRate);
             timer.Elapsed += (source, e) =>
             {
-                lock (entityManager)
+                foreach (KeyValuePair<IPEndPoint, Client> kvp in networkServer.Clients)
                 {
-                    entityManager.Update(0.033f);
-                    long checkTimestamp = DateTime.Now.Ticks;
-
-                    lock (gameClients)
-                    {
-                        var d = DateTime.Now;
-                        foreach (GameClient client in gameClients.Values.ToList())
+                    kvp.Value.ProcessMessages();
+                    if (kvp.Value.ReceivedMessages.Count == 0) {
+                        if (gameClients.ContainsKey(kvp.Key))
                         {
-                            if (new TimeSpan(checkTimestamp - client.Client.LastMessageTimestasmp).TotalSeconds > 5)
+                            gameClients[kvp.Key].KeepAliveTicks++;
+                            if (gameClients[kvp.Key].KeepAliveTicks > MaxKeepAliveTicks)
                             {
-                                ColorLog(ConsoleColor.Red, "Disconnected", " " + gameClients[client.Client.RemoteEndPoint].Name + " [timed out]");
-                                entityManager.Destroy(client.Player);
-                                gameClients.Remove(client.Client.RemoteEndPoint);
-                                networkClient.RemoveClient(client.Client.RemoteEndPoint);
-                                
-                            }
-                            else
-                            {
-                                client.SendGameStateMessage(new GameStateMessage() { PlayerEntityID = client.Player.ID, Entities = entityManager.Entities.ToArray() });
+                                entityManager.Destroy(gameClients[kvp.Key].Player, true);
+                                networkServer.Disconnected(kvp.Key);
                             }
                         }
                     }
+                    foreach (Message message in kvp.Value.ReceivedMessages)
+                    {
+                        if (!gameClients.ContainsKey(kvp.Key) && message is ConnectMessage connectMessage)
+                        {
+                            bool approved = IsNameAvailable(connectMessage.Name);
+                            if (approved)
+                            {
+                                Player player = (Player)entityManager.Create(new Player(entityManager, connectMessage.Name, connectMessage.Color), true);
+                                kvp.Value.SendQueue.Enqueue(new ConnectResponseMessage() { Approved = true, PlayerID = player.ID });
+                                gameClients.Add(kvp.Key, new GameClient(kvp.Value, player));
+
+                                foreach (Entity entity in entityManager.Entities)
+                                {
+                                    if (entity.ID != player.ID)
+                                    {
+                                        networkServer.SendQueue.Enqueue(new EntityCreateMessage() { EntityID = entity.ID, EntityData = GetEntityDataFor(entity), Tick = entity.CreationTick.Value });
+                                    }
+                                }
+
+                                // TODO: Asteroid shape messages
+                            }
+                            else
+                            {
+                                networkServer.Disconnected(kvp.Key);
+                            }
+                        }
+                        if (gameClients.ContainsKey(kvp.Key) && message.Type == MessageTypes.Disconnect)
+                        {
+                            entityManager.Destroy(gameClients[kvp.Key].Player, true);
+                            networkServer.Disconnected(kvp.Key);
+                        }
+                    }
+               
+                    foreach (Message message in kvp.Value.ReceivedMessages)
+                    {
+                        // TODO: Input server side - What is multiple messages arrive in the same tick
+                        if (gameClients.ContainsKey(kvp.Key) && message is PlayerInputMessage inputMessage)
+                        {
+                            gameClients[kvp.Key].Player.Firing = inputMessage.Firing;
+                            gameClients[kvp.Key].Player.TurnState = inputMessage.TurnState;
+                            gameClients[kvp.Key].Player.SpeedState = inputMessage.SpeedState;
+                            gameClients[kvp.Key].Player.TurretDirection = inputMessage.TurretDirection;
+                        }
+                    }
+
+                    // TODO: Send back last acknowledged input #
                 }
+
+                foreach (Entity entity in entityManager.Entities)
+                {
+                    if (entity is Player player)
+                    {
+                        networkServer.SendQueue.Enqueue(new PlayerStateMessage() { PlayerID = player.ID, Position = player.Position, Direction = player.Direction, Speed = player.Speed, TurretDirection = player.TurretDirection });
+                    }
+                }
+
+                networkServer.SendMessages();
+                entityManager.Tick();
             };
             timer.AutoReset = true;
             timer.Start();
         }
 
-        static void ColorLog(ConsoleColor color, string colored, string normal)
+        public static void ColorLog(ConsoleColor color, string colored, string normal)
         {
             Console.ForegroundColor = color;
             Console.Write(colored);
             Console.ResetColor();
             Console.WriteLine(normal);
+        }
+
+        static bool IsNameAvailable(string name)
+        {
+            foreach (GameClient gameClient in gameClients.Values)
+            {
+                if (gameClient.Player.Name == name) return false;
+            }
+
+            return true;
         }
     }
 }

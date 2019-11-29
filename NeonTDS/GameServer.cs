@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
@@ -8,33 +9,37 @@ namespace NeonTDS
     {
         private NetworkClient networkClient;
 
+        public List<Message> ReceivedMessages => networkClient.ReceivedMessages;
+
         public GameServer()
         {
             networkClient = new NetworkClient(new UdpClient(Game.Config.ServerIP, Game.Config.ServerPort));
-            networkClient.OnMessageRecieved += message =>
-            {
-                if (message is GameStateMessage gameStateMsg) GameStateMessageRecieved?.Invoke(gameStateMsg);
-                else if (message is ConnectResponseMessage connectResponse) ConnectResponseRecieved?.Invoke(connectResponse);
-            };
             networkClient.Listen();
         }
  
-        public void SendConnect(string name)
+        public void ProcessMessages()
         {
-            networkClient.SendMessage(new ConnectMessage { Name = name });
+            networkClient.ProcessMessages();
         }
 
-        public void SendInput(InputMessage message)
+        public void QueueSend(Message message)
         {
-            networkClient.SendMessage(message);
+            networkClient.SendQueue.Enqueue(message);
         }
 
-        public event Action<GameStateMessage> GameStateMessageRecieved;
-        public event Action<ConnectResponseMessage> ConnectResponseRecieved;
+        public void SendAll()
+        {
+            networkClient.SendMessages();
+        }
+
+        public void SendConnectRequest(string name, byte color)
+        {
+            networkClient.SendMessage(new ConnectMessage() { Name = name, Color = color });
+        }
 
         public void Disconnect()
         {
-            networkClient.SendMessage(new DisconnectMessage());
+            networkClient.SendMessage(new Message(MessageTypes.Disconnect));
         }
     }
 }

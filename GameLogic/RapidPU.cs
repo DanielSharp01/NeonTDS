@@ -5,9 +5,9 @@ using System.Text;
 
 namespace NeonTDS {
 	public class RapidPU : PowerUp {
-		public RapidPU(EntityManager entityManager, Shape shape) : base(entityManager, shape) {
-			Color = new Vector4(1, 1, 0, 1);
-
+        public static readonly Vector4 PUColor = new Vector4(1, 1, 0, 1);
+        public RapidPU(EntityManager entityManager, Shape shape) : base(entityManager, shape, PowerUpTypes.RapidFire) {
+			Color = PUColor;
 		}
 	}
 }

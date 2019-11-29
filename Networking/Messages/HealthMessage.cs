@@ -2,12 +2,12 @@
 
 namespace NeonTDS
 {
-    public class DamageMessage : Message
+    public class HealthMessage : Message
     {
         public uint PlayerID { get; set; }
-        public byte Damage { get; set; }
         public byte Health { get; set; }
-        public DamageMessage()
+        public byte Shield { get; set; }
+        public HealthMessage()
             : base(MessageTypes.Damage)
         { }
 
@@ -15,16 +15,16 @@ namespace NeonTDS
         {
             base.FromBytes(reader);
             PlayerID = reader.ReadUInt32();
-            Damage = reader.ReadByte();
             Health = reader.ReadByte();
+            Shield = reader.ReadByte();
         }
 
         public override void ToBytes(BinaryWriter writer)
         {
             base.ToBytes(writer);
             writer.Write(PlayerID);
-            writer.Write(Damage);
             writer.Write(Health);
+            writer.Write(Shield);
         }
     }
 }
