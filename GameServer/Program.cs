@@ -43,7 +43,7 @@ namespace NeonTDS
                                 Console.Clear();
                                 foreach (Entity entity in entityManager.Entities)
                                 {
-                                    ColorLog("entities", ConsoleColor.Cyan, entity.ID.ToString(), " " + entity.GetType().ToString());
+                                    ColorLog("entities", ConsoleColor.Cyan, entity.ID.ToString(), " " + entity.GetType().ToString() + " (Position= " + entity.Position + ", Direction=" + entity.Direction + ", Speed=" + entity.Speed + ")");
                                 }
                             };
                             timer.AutoReset = true;
