@@ -7,8 +7,8 @@ namespace NeonTDS
 {
     public class Player : Entity
     {
-        public const DefaultFireRate = 200;
-        public const RapidFireRate = 400;
+        public const int DefaultFireRate = 200;
+        public const int RapidFireRate = 400;
         public bool LocalPlayer { get; set; }
         public byte PlayerColor { get; set; }
         public string Name { get; set; }
