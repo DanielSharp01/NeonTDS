@@ -7,6 +7,8 @@ namespace NeonTDS
 {
     public class Player : Entity
     {
+        public const DefaultFireRate = 200;
+        public const RapidFireRate = 400;
         public bool LocalPlayer { get; set; }
         public byte PlayerColor { get; set; }
         public string Name { get; set; }
@@ -42,17 +44,17 @@ namespace NeonTDS
                 {
                     case PowerUpTypes.None:
                         Color = new Vector4(1, 1, 1, 1); // TODO: Use byte based player color
-                        fireRate = 150;
+                        fireRate = DefaultFireRate;
                         rapidTimer = 5;
                         break;
                     case PowerUpTypes.RapidFire:
                         Color = RapidPU.PUColor;
-                        fireRate = 300;
+                        fireRate = RapidFireRate;
                         rapidTimer = 5;
                         break;
                     case PowerUpTypes.RayGun:
                         Color = SniperPU.PUColor;
-                        fireRate = 150;
+                        fireRate = DefaultFireRate;
                         rapidTimer = 5;
                         break;
                 }
@@ -76,7 +78,7 @@ namespace NeonTDS
         public Player(EntityManager entityManager, string name, byte playerColor)
             : base(entityManager, Shape.Player)
         {
-            FireRate = 150;
+            FireRate = DefaultFireRate;
             Name = name;
             PlayerColor = playerColor;
             if (entityManager.ServerSide) Position = FindSpawnPosition();
@@ -116,13 +118,13 @@ namespace NeonTDS
                 {
                     if (entityManager.ServerSide)
                     {
-                        entityManager.Create(new Bullet(entityManager, ID) { Position = Position, Speed = 0, Direction = TurretDirection, IsSniperBullet = true, Shape = Shape.SniperBullet, Color = new Vector4(0, 1, 1, 1) });
+                        entityManager.Create(new Bullet(entityManager, ID) { Position = Position, Speed = 4000, Direction = TurretDirection, IsSniperBullet = true, Shape = Shape.SniperBullet, Color = new Vector4(0, 1, 1, 1) });
                     }
                     ActivePowerUp = PowerUpTypes.None;
                 }
                 else if (entityManager.ServerSide)
                 {
-                    entityManager.Create(new Bullet(entityManager, ID) { Position = Position, Speed = 2000, Direction = TurretDirection, Color = Color });
+                    entityManager.Create(new Bullet(entityManager, ID) { Position = Position, Speed = 4000, Direction = TurretDirection, Color = Color });
                 }
 			}
 
@@ -141,7 +143,7 @@ namespace NeonTDS
 				if (rapidTimer <= 0) {
                     ActivePowerUp = PowerUpTypes.None;
 					rapidTimer = 5;
-					fireRate = 150;
+					fireRate = 200;
 				}
 			}
         }
@@ -236,6 +238,7 @@ namespace NeonTDS
             {
                 Position = FindSpawnPosition();
                 Health = 100;
+                Speed = MinSpeed;
                 Shield = 0;
                 ActivePowerUp = PowerUpTypes.None;
                 entityManager.InvokePlayerRespawned(this);
