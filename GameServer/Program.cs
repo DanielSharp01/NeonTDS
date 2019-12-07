@@ -219,7 +219,7 @@ namespace NeonTDS
                     {
                         if (gameClients.ContainsKey(kvp.Key) && message is PlayerInputMessage inputMessage)
                         {
-                            if (lastProcessedMessage < inputMessage.SequenceNumber)
+                            if (lastProcessedMessage == null || lastProcessedMessage < inputMessage.SequenceNumber)
                             {
                                 lastProcessedMessage = inputMessage.SequenceNumber;
                             }
