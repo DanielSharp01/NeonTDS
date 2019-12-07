@@ -14,6 +14,8 @@
         Connect,
         ConnectResponse,
         PlayerInput,
-        Disconnect
+        PlayerInputAck,
+        Disconnect,
+        Ping
     }
 }

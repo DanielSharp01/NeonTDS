@@ -322,13 +322,13 @@ namespace NeonTDS
                 };
                 var textSize = textLayout.LayoutBounds;
                 drawingSession.DrawTextLayout(textLayout, playerPosition - new Vector2((float)(textSize.Width / 2), (float)(textSize.Height / 2 + 64)), playerColor);
-				drawingSession.DrawRectangle(new Rect(playerPosition.X - 32, playerPosition.Y - 48, 64f, 8), playerColor);
+                drawingSession.DrawRectangle(new Rect(playerPosition.X - 32, playerPosition.Y - 48, 64f, 8), playerColor);
                 if (player.Health > 0) drawingSession.FillRectangle(new Rect(playerPosition.X - 32, playerPosition.Y - 48, 64f * player.Health / 100f, 8), playerColor);
                 if (player.Shield > 0) drawingSession.FillRectangle(new Rect(playerPosition.X - 32, playerPosition.Y - 48, 64f * player.Shield / 100f, 8), Colors.Aquamarine);
             }
 
-            drawingSession.DrawText(fpsCounter.FPS.ToString(), Vector2.Zero, Colors.LimeGreen);
-            drawingSession.DrawText(DebugString ?? "", new Vector2(0, 32), Colors.DarkRed);
+            drawingSession.DrawText("FPS" + fpsCounter.FPS, new Vector2(0, 32), fpsCounter.FPS >= 60 ? Colors.LimeGreen : fpsCounter.FPS > 50 ? Colors.YellowGreen : fpsCounter.FPS > 40 ? Colors.Yellow : fpsCounter.FPS > 30 ? Colors.Orange : fpsCounter.FPS > 20 ? Colors.OrangeRed : Colors.Red);
+            drawingSession.DrawText("Ping" + gameServer.PingMS, new Vector2(0, 32), gameServer.PingMS < 25 ? Colors.LimeGreen : gameServer.PingMS < 50 ? Colors.YellowGreen : gameServer.PingMS < 100 ? Colors.Yellow : gameServer.PingMS < 150 ? Colors.Orange : gameServer.PingMS < 300 ? Colors.OrangeRed : Colors.Red);
         }
     }
 }

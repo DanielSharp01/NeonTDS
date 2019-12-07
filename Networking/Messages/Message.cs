@@ -62,6 +62,9 @@ namespace NeonTDS
                 case MessageTypes.PlayerInput:
                     message = new PlayerInputMessage();
                     break;
+                case MessageTypes.PlayerInputAck:
+                    message = new InputAckMessage();
+                    break;
                 case MessageTypes.PlayerPoweredUp:
                     message = new PlayerPoweredUpMessage();
                     break;

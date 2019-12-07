@@ -64,7 +64,7 @@ namespace NeonTDS
                                 Console.Clear();
                                 foreach (KeyValuePair<IPEndPoint, GameClient> kvp in gameClients)
                                 {
-                                    ColorLog("players", ConsoleColor.Cyan, kvp.Value.Player.Name, "(Health=" + kvp.Value.Player.Health + ", Shield=" + kvp.Value.Player.Shield + ", PowerUp=" + Enum.GetName(typeof(PowerUpTypes), kvp.Value.Player.ActivePowerUp) +  ") from " + kvp.Key.ToString());
+                                    ColorLog("players", ConsoleColor.Cyan, kvp.Value.Player.Name, "(Health=" + kvp.Value.Player.Health + ", Shield=" + kvp.Value.Player.Shield + ", PowerUp=" + Enum.GetName(typeof(PowerUpTypes), kvp.Value.Player.ActivePowerUp) +  ") from " + kvp.Key.ToString() + " w/ ping " + kvp.Value.Client.PingMS);
                                 }
                             };
                             timer.AutoReset = true;
@@ -204,12 +204,16 @@ namespace NeonTDS
                             networkServer.Disconnected(kvp.Key);
                         }
                     }
-               
+
+                    uint? lastProcessedMessage = null;
                     foreach (Message message in kvp.Value.ReceivedMessages)
                     {
-                        // TODO: Input server side - What is multiple messages arrive in the same tick
                         if (gameClients.ContainsKey(kvp.Key) && message is PlayerInputMessage inputMessage)
                         {
+                            if (lastProcessedMessage < inputMessage.SequenceNumber)
+                            {
+                                lastProcessedMessage = inputMessage.SequenceNumber;
+                            }
                             gameClients[kvp.Key].Player.Firing = inputMessage.Firing;
                             gameClients[kvp.Key].Player.TurnState = inputMessage.TurnState;
                             gameClients[kvp.Key].Player.SpeedState = inputMessage.SpeedState;
@@ -217,7 +221,10 @@ namespace NeonTDS
                         }
                     }
 
-                    // TODO: Send back last acknowledged input #
+                    if (lastProcessedMessage != null)
+                    {
+                        gameClients[kvp.Key].Client.SendQueue.Enqueue(new InputAckMessage() { SequenceNumber = lastProcessedMessage.Value });
+                    }
                 }
                 entityManager.Update(1.0f / NetworkServer.TickRate); 
                 entityManager.Tick();

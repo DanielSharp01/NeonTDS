@@ -9,6 +9,8 @@ namespace NeonTDS
 {
     public class Client
     {
+        private double? pingRequestTimestamp = null;
+        public double PingMS { get; private set; }
         public List<byte> ReceiveQueue { get; } = new List<byte>();
         public MessageQueue SendQueue { get; } = new MessageQueue();
 
@@ -23,6 +25,19 @@ namespace NeonTDS
                 ReceiveQueue.Clear();
             }
             ReceivedMessages = Message.FromPackedBytes(stream);
+        }
+
+        public void SendingPing()
+        {
+            if (pingRequestTimestamp.HasValue) return;
+            pingRequestTimestamp = DateTime.Now.TimeOfDay.TotalMilliseconds;
+        }
+
+        public void ReceivedPong()
+        {
+            if (pingRequestTimestamp == null) return;
+            PingMS = DateTime.Now.TimeOfDay.TotalMilliseconds - pingRequestTimestamp.Value;
+            pingRequestTimestamp = null;
         }
     }
 
@@ -70,7 +85,7 @@ namespace NeonTDS
             }
         }
 
-        private void SendToEndpoint(List<Message> messages, IPEndPoint endpoint)
+        public void SendToEndpoint(List<Message> messages, IPEndPoint endpoint)
         {
             MemoryStream stream = new MemoryStream();
             Message.ToPackedBytes(stream, messages);
@@ -89,6 +104,13 @@ namespace NeonTDS
             {
                 Connected(received.RemoteEndPoint, new Client());
             }
+            else if (received.Buffer.Length > 0 && received.Buffer[0] == (byte)MessageTypes.Ping)
+            {
+                Clients[received.RemoteEndPoint].ReceivedPong();
+                Clients[received.RemoteEndPoint].SendingPing();
+                SendToEndpoint(new List<Message>() { new Message(MessageTypes.Ping) }, received.RemoteEndPoint);
+            }
+
             lock (Clients[received.RemoteEndPoint].ReceiveQueue)
             {
                 Clients[received.RemoteEndPoint].ReceiveQueue.AddRange(received.Buffer);
@@ -98,6 +120,8 @@ namespace NeonTDS
         private void Connected(IPEndPoint endpoint, Client client)
         {
             Clients.Add(endpoint, client);
+            client.SendingPing();
+            SendToEndpoint(new List<Message>() { new Message(MessageTypes.Ping) }, endpoint);
         }
 
         public void Disconnected(IPEndPoint endpoint)

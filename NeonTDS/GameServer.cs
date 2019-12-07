@@ -9,6 +9,8 @@ namespace NeonTDS
     {
         private NetworkClient networkClient;
 
+        public double PingMS => networkClient.PingMS;
+
         public List<Message> ReceivedMessages => networkClient.ReceivedMessages;
 
         public GameServer()

@@ -10,6 +10,9 @@ namespace NeonTDS
     {
         private UdpClient client;
 
+        private double? pingRequestTimestamp = null;
+        public double PingMS { get; private set; }
+
         public List<byte> ReceiveQueue { get; } = new List<byte>();
 
         public List<Message> ReceivedMessages { get; private set; } = null;
@@ -20,6 +23,18 @@ namespace NeonTDS
             this.client = client;
         }
 
+        public void SendingPing()
+        {
+            if (pingRequestTimestamp.HasValue) return;
+            pingRequestTimestamp = DateTime.Now.TimeOfDay.TotalMilliseconds;
+        }
+
+        public void ReceivedPong()
+        {
+            if (pingRequestTimestamp == null) return;
+            PingMS = DateTime.Now.TimeOfDay.TotalMilliseconds - pingRequestTimestamp.Value;
+            pingRequestTimestamp = null;
+        }
         public void Listen()
         {
             Task.Factory.StartNew(async () =>
@@ -65,6 +80,12 @@ namespace NeonTDS
         private async Task ReceiveMessages()
         {
             var received = await client.ReceiveAsync();
+            if (received.Buffer.Length > 0 && received.Buffer[0] == (byte)MessageTypes.Ping)
+            {
+                ReceivedPong();
+                SendingPing();
+                SendMessage(new Message(MessageTypes.Ping));
+            }
             lock (ReceiveQueue)
             {
                 ReceiveQueue.AddRange(received.Buffer);
