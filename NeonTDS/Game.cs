@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -40,7 +41,7 @@ namespace NeonTDS
         public string DebugString { get; set; } = "";
 
         private uint lastProcessedInputSeqNumber;
-        private Dictionary<uint, PlayerStateSnapshot> inputSnapshots = new Dictionary<uint, PlayerStateSnapshot>();
+        private PlayerStateSnapshotResolver playerStateSnapshotResolver = new PlayerStateSnapshotResolver();
 
         private readonly BloomRendering bloomRendering = new BloomRendering
         {
@@ -100,9 +101,6 @@ namespace NeonTDS
             {
                 if (message is InputAckMessage ackMessage)
                 {
-                    foreach (uint seqNumber in inputSnapshots.Keys) {
-                        if (seqNumber < ackMessage.SequenceNumber) inputSnapshots.Remove(seqNumber);
-                    }
                     lastProcessedInputSeqNumber = ackMessage.SequenceNumber;
                 }
             }
@@ -147,7 +145,7 @@ namespace NeonTDS
 
             LocalPlayer.Firing = InputManager.IsMouseButton(MouseButton.Left, PressState.Down);
 
-            inputSnapshots.Add(PlayerInputMessage.NextSequenceNumber, new PlayerStateSnapshot(LocalPlayer));
+            playerStateSnapshotResolver.TakeSnapshot(PlayerInputMessage.NextSequenceNumber, LocalPlayer);
             gameServer.QueueSend(new PlayerInputMessage { Firing = LocalPlayer.Firing, SpeedState = LocalPlayer.SpeedState, TurnState = LocalPlayer.TurnState, TurretDirection = LocalPlayer.TurretDirection });
             gameServer.SendAll();
         }
@@ -229,6 +227,7 @@ namespace NeonTDS
                     if (localPlayerID == entityCreate.EntityID)
                     {
                         Camera.FollowedEntity = LocalPlayer = (Player)entity;
+                        playerStateSnapshotResolver.SetAbsoluteSnapshot(0, LocalPlayer);
                     }
                     break;
                 case EntityDestroyMessage entityDestroy:
@@ -243,35 +242,11 @@ namespace NeonTDS
                     if (player.ID != localPlayerID)
                     {
                         player.TurretDirection = playerState.TurretDirection;
-                        player.Position = playerState.Position;
-                        player.Direction = playerState.Direction;
-                        player.Speed = playerState.Speed;
-                    }
-                    else
-                    {
-                        if (inputSnapshots.ContainsKey(lastProcessedInputSeqNumber))
-                        {
-                            PlayerStateSnapshot snapshot = inputSnapshots[lastProcessedInputSeqNumber];
-                            DebugString = "Last processed seq number " + lastProcessedInputSeqNumber;
-                            if ((playerState.Position - snapshot.Position).Length() > 20)
-                            {
-                                player.Position = player.Position - snapshot.Position + playerState.Position;
-                                snapshot.Position = playerState.Position;
-                            }
-                            if (Math.Abs(playerState.Speed - snapshot.Speed) > 10)
-                            {
-                                player.Speed = player.Speed - snapshot.Speed + playerState.Speed;
-                                snapshot.Speed = playerState.Speed;
-                            }
-                            if (Math.Abs(playerState.Direction - snapshot.Direction) > 0.1)
-                            {
-                                player.Direction = player.Direction - snapshot.Direction + playerState.Direction;
-                                snapshot.Direction = playerState.Direction;
-                            }
-                        }
                     }
 
-                    // TODO: Lag compensation
+                    player.Position = playerState.Position;
+                    player.Direction = playerState.Direction;
+                    player.Speed = playerState.Speed;
 
                     break;
                 case PlayerRespawnedMessage playerRespawned:
