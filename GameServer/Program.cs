@@ -148,6 +148,7 @@ namespace NeonTDS
             var timer = new System.Timers.Timer(1000.0 / NetworkServer.TickRate);
             timer.Elapsed += (source, e) =>
             {
+                List<IPEndPoint> disconnectedPlayers = new List<IPEndPoint>();
                 foreach (KeyValuePair<IPEndPoint, Client> kvp in networkServer.Clients)
                 {
                     kvp.Value.ProcessMessages();
@@ -160,6 +161,7 @@ namespace NeonTDS
                                 ColorLog("main", ConsoleColor.Red, "Disconnected", " " + gameClients[kvp.Key].Player.Name + " [timed out] from " + kvp.Key.ToString());
                                 entityManager.Destroy(gameClients[kvp.Key].Player, true);
                                 networkServer.Disconnected(kvp.Key);
+                                disconnectedPlayers.Add(kvp.Key);
                             }
                         }
                     }
@@ -195,6 +197,7 @@ namespace NeonTDS
                             {
                                 ColorLog("main", ConsoleColor.Red, "Rejected", " " + connectMessage.Name + " [name taken] from " + kvp.Key.ToString());
                                 networkServer.Disconnected(kvp.Key);
+                                disconnectedPlayers.Add(kvp.Key);
                             }
                         }
                         if (gameClients.ContainsKey(kvp.Key) && message.Type == MessageTypes.Disconnect)
@@ -202,7 +205,13 @@ namespace NeonTDS
                             ColorLog("main", ConsoleColor.Red, "Disconnected", " " + gameClients[kvp.Key].Player.Name + " from " + kvp.Key.ToString());
                             entityManager.Destroy(gameClients[kvp.Key].Player, true);
                             networkServer.Disconnected(kvp.Key);
+                            disconnectedPlayers.Add(kvp.Key);
                         }
+                    }
+
+                    foreach (IPEndPoint endpoint in disconnectedPlayers)
+                    {
+                        gameClients.Remove(endpoint);
                     }
 
                     uint? lastProcessedMessage = null;
