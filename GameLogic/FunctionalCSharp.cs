@@ -4,7 +4,7 @@ using System.Text;
 
 namespace NeonTDS
 {
-    public static class FreakingFunctionalCSharp
+    public static class FunctionalCSharp
     {
         public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
         {
