@@ -17,7 +17,6 @@ namespace NeonTDS
         private readonly HashSet<Entity> creatableEntities = new HashSet<Entity>();
         private readonly Dictionary<uint, Entity> entities = new Dictionary<uint, Entity>();
         private readonly HashSet<uint> destroyableEntities = new HashSet<uint>();
-        private readonly HashSet<uint> temporaryEntities = new HashSet<uint>();
 
         public event Action<Entity> EntityCreated;
         public event Action<Entity> EntityDestroyed;
@@ -86,13 +85,6 @@ namespace NeonTDS
                 else
                 {
                     creatableEntities.Add(entity);
-                }
-            }
-            if (!ServerSide && entity.ID >= uint.MaxValue / 2)
-            {
-                lock (temporaryEntities)
-                {
-                    temporaryEntities.Add(entity.ID);
                 }
             }
             return entity;
