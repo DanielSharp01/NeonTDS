@@ -15,7 +15,6 @@ namespace NeonTDS
         public float Speed { get; set; }
         public float Direction { get; set; }
         public Shape Shape { get; /*protected*/ set; }
-        public float BoundingRadius { get; private set; }
         public Vector4 Color { get; set; }
 
         public uint? CreationTick { get; set; } = null;
@@ -43,7 +42,6 @@ namespace NeonTDS
             NextID %= uint.MaxValue;
 
             Shape = shape;
-            CalculateBoundingRadius();
         }
 
         public virtual void UpdateEntity(Entity data)
@@ -67,16 +65,6 @@ namespace NeonTDS
             if (entityManager.ServerSide)
             {
                 DestructionTick = entityManager.Clock;
-            }
-        }
-
-        public void CalculateBoundingRadius()
-        {
-            BoundingRadius = (Shape.Points.First() - Shape.Origin).LengthSquared();
-            foreach (Vector2 point in Shape.Points)
-            {
-                float distance = (point - Shape.Origin).LengthSquared();
-                if (distance > BoundingRadius) BoundingRadius = distance;
             }
         }
 
