@@ -13,5 +13,42 @@
 
     <Grid>
         <canvas:CanvasAnimatedControl  x:Name="canvasControl" ClearColor="Black" SizeChanged="canvasControl_SizeChanged" CreateResources="canvasControl_CreateResources" Update="canvasControl_Update" Draw="canvasControl_Draw"/>
+
+        <TextBox x:Name="nameInput"
+                     Header="Enter your name:" PlaceholderText="Name"
+                     Width="300" Height="100"  HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                     Background="Gray"
+                    Foreground="Red"
+                        />
+
+        <ComboBox x:Name="cmbColor" VerticalAlignment="Bottom" Margin="50" HorizontalAlignment="Center">
+            <ComboBoxItem IsSelected="True">Red</ComboBoxItem>
+            <ComboBoxItem>Green</ComboBoxItem>
+            <ComboBoxItem>Blue</ComboBoxItem>
+        </ComboBox>
+
+        <TextBox x:Name="serverIpInput"
+                     Header="Enter server IP :" 
+                     Text="134.209.232.177"
+                     Width="150" Height="100"  HorizontalAlignment="Right"
+                  VerticalAlignment="Center"
+                     Background="Gray"
+                    Foreground="Red"
+                        />
+
+        <TextBox x:Name="serverPortInput"
+                     Header="Enter port :" 
+                      Text="32132"
+                     Width="150" Height="100"  HorizontalAlignment="Left"
+                 VerticalAlignment="Center"
+                     Background="Gray"
+                    Foreground="Red"
+                        />
+
+        <Button x:Name="btnPlay" Click="btnPlay_click" Background="Azure"
+                Width="55" Height="30" HorizontalAlignment="Center" 
+                VerticalAlignment="Bottom" Margin="10">Play!</Button>
+
     </Grid>
 </Page>
