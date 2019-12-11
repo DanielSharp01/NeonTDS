@@ -20,6 +20,7 @@ namespace NeonTDS
     {
         public static Game Instance { get; private set; }
         public static Config Config { get; private set; }
+		public CanvasAnimatedControl canvasForAsteroids { get; set; }
         public Game()
         {
             using (StreamReader reader = new StreamReader("config.json"))
@@ -67,6 +68,7 @@ namespace NeonTDS
 
 		public void CreateResources(CanvasAnimatedControl canvas)
         {
+			canvasForAsteroids = canvas;
             bloomRendering.CanvasLoaded(canvas);
             bloomRendering.SetupParameters();
 
@@ -201,7 +203,17 @@ namespace NeonTDS
                         }
                         return null;
                     case AsteroidData asteroidData:
-                        return new Asteroid(EntityManager, Shape.Player); // TODO: Asteroid client side
+						{
+							Asteroid ret = new Asteroid(EntityManager, asteroidData.ShapeID)
+							{
+								RotationSpeed = asteroidData.RotationSpeed,
+								Position = asteroidData.Position,
+								Direction = asteroidData.Direction
+								
+							};
+							EntityRenderer.addShapeToDictionary(canvasForAsteroids, ret.Shape, ret.Radius + 1);
+							return ret;
+						}
                 }
 
                 return null;

@@ -14,7 +14,7 @@ namespace NeonTDS
         public Vector2 Position { get; set; }
         public float Speed { get; set; }
         public float Direction { get; set; }
-        public Shape Shape { get; /*protected*/ set; }
+        public Shape Shape { get; set; }
         public Vector4 Color { get; set; }
 
         public uint? CreationTick { get; set; } = null;
