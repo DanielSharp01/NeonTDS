@@ -21,6 +21,11 @@ namespace NeonTDS
 
 		}
 
+		public void addShapeToDictionary(CanvasAnimatedControl canvas, Shape shape,float bitmapSize)
+		{
+			sprites.Add(shape, SpriteBuilder.RenderFromShape(canvas, bitmapSize, bitmapSize, shape));
+		}
+
         private readonly Dictionary<uint, IDrawable> drawables = new Dictionary<uint, IDrawable>();
 
         public void CreateDrawable(Entity entity)

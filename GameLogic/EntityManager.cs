@@ -9,6 +9,8 @@ namespace NeonTDS
     {
         public uint Clock { get; private set; } = 0;
 
+		private bool asteroidsGenerated = false;
+
         public void Tick()
         {
             Clock++;
@@ -128,9 +130,16 @@ namespace NeonTDS
             }
 		}
 
+		public void generateAsteroids()
+		{
+			if (!ServerSide || asteroidsGenerated) return;
+			//TODO generate asteroids
+		}
+
         public void Update(float elapsedTimeSeconds)
         {
             UpdatePowerUps(elapsedTimeSeconds);
+			generateAsteroids();
 
             foreach (Entity entity in creatableEntities)
             {
