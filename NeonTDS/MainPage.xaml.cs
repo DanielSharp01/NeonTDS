@@ -85,5 +85,47 @@ namespace NeonTDS
         {
             game.SizeChanged(sender as CanvasAnimatedControl, e.NewSize, e.PreviousSize);
         }
+
+        private void btnPlay_click(object sender, RoutedEventArgs e)
+        {
+
+            string name = nameInput.Text;
+            string ip = serverIpInput.Text;
+            string port = serverPortInput.Text;
+            int colorIndex = cmbColor.SelectedIndex;
+            nameInput.Text = "";
+            nameInput.PlaceholderText = "";
+            serverIpInput.Text = "";
+            serverIpInput.PlaceholderText = "";
+            serverPortInput.Text = "";
+            serverPortInput.PlaceholderText = "";
+            nameInput.Visibility = 0;
+            cmbColor.Visibility = 0;
+            btnPlay.Visibility = 0;
+            serverPortInput.Visibility = 0;
+            serverIpInput.Visibility = 0;
+            serverIpInput.IsEnabled = false;
+            serverPortInput.IsEnabled = false;
+            btnPlay.IsEnabled = false;
+            cmbColor.IsEnabled = false;
+            nameInput.IsEnabled = false;
+            game.SetPlayerNameColor(name, colorIndex, ip, port, this);
+
+
+        }
+
+        public void setConnectScrren()
+        {
+            nameInput.Visibility = Visibility.Visible;
+            cmbColor.Visibility = Visibility.Visible;
+            btnPlay.Visibility = Visibility.Visible;
+            serverPortInput.Visibility = Visibility.Visible;
+            serverIpInput.Visibility = Visibility.Visible;
+            btnPlay.IsEnabled = true;
+            cmbColor.IsEnabled = true;
+            nameInput.IsEnabled = true;
+            serverIpInput.IsEnabled = true;
+            serverPortInput.IsEnabled = true;
+        }
     }
 }

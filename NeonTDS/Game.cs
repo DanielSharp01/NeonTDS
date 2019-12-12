@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Timers;
 using Windows.Foundation;
 using Windows.System;
 using Windows.UI;
@@ -42,6 +43,10 @@ namespace NeonTDS
         public string DebugString { get; set; } = "";
 
         private uint lastProcessedInputSeqNumber;
+
+        private double timeToDisconnect ;
+        private double lastTimeProcessed ;
+        private double nowTime ;
         private PlayerStateSnapshotResolver playerStateSnapshotResolver = new PlayerStateSnapshotResolver();
 
         private readonly BloomRendering bloomRendering = new BloomRendering
@@ -52,7 +57,7 @@ namespace NeonTDS
         };
 
         private GameServer gameServer;
-
+        private MainPage mainPage;
         public void Load()
         {
             SetupGameConnection();
@@ -63,7 +68,7 @@ namespace NeonTDS
         private void SetupGameConnection()
         {
             gameServer = new GameServer();
-            gameServer.SendConnectRequest(Guid.NewGuid().ToString(), 0);
+           // gameServer.SendConnectRequest(Guid.NewGuid().ToString(), 0);
         }
 
 		public void CreateResources(CanvasAnimatedControl canvas)
@@ -96,14 +101,14 @@ namespace NeonTDS
             InputManager.Update();
             Matrix3x2.Invert(Camera.Transform, out Matrix3x2 inverse);
             if (LocalPlayer != null) HandlePlayerInput();
-
+            nowTime = timing.ElapsedTime.TotalSeconds;
             gameServer.ProcessMessages();
 
             foreach (Message message in gameServer.ReceivedMessages)
             {
                 if (message is InputAckMessage ackMessage)
                 {
-                    lastProcessedInputSeqNumber = ackMessage.SequenceNumber;
+                        lastProcessedInputSeqNumber = ackMessage.SequenceNumber;
                 }
             }
 
@@ -114,6 +119,12 @@ namespace NeonTDS
             EntityManager.Update((float)timing.ElapsedTime.TotalSeconds);
             Camera.Update();
             InputManager.AfterUpdate();
+
+            if (nowTime - lastTimeProcessed > timeToDisconnect && timeToDisconnect > 1)
+            {
+                gameServer.Disconnect();
+                this.SetConnectScreen();
+            }
         }
 
         private void HandlePlayerInput()
@@ -158,18 +169,18 @@ namespace NeonTDS
             {
                 switch (entityCreateMessage.EntityData)
                 {
-                    case PlayerData playerData:
-                        return new Player(EntityManager, playerData.Name, playerData.Color)
-                        {
-                            ID = entityCreateMessage.EntityID,
-                            Speed = playerData.Speed,
-                            Direction = playerData.Direction,
-                            ActivePowerUp = playerData.ActivePowerUp,
-                            Health = playerData.Health,
-                            Shield = playerData.Shield,
-                            Position = playerData.Position,
-                            TurretDirection = playerData.TurretDirection
-                        };
+                    case PlayerData playerData:                                            
+                            return new Player(EntityManager, playerData.Name, playerData.Color)
+                            {
+                                ID = entityCreateMessage.EntityID,
+                                Speed = playerData.Speed,
+                                Direction = playerData.Direction,
+                                ActivePowerUp = playerData.ActivePowerUp,
+                                Health = playerData.Health,
+                                Shield = playerData.Shield,
+                                Position = playerData.Position,
+                                TurretDirection = playerData.TurretDirection
+                            };                       
                     case BulletData bulletData:
                         return new Bullet(EntityManager, bulletData.PlayerID)
                         {
@@ -248,19 +259,22 @@ namespace NeonTDS
                     EntityManager.DestroyById(entityDestroy.EntityID, true);
                     break;
                 case PlayerStateMessage playerState:
-                    if (!EntityManager.HasEntityWithId(playerState.PlayerID)) return;
-                    player = (Player)EntityManager.GetEntityById(playerState.PlayerID);
-
-                    if (player.ID != localPlayerID)
                     {
-                        player.TurretDirection = playerState.TurretDirection;
+                        lastTimeProcessed = nowTime;
+                        if (!EntityManager.HasEntityWithId(playerState.PlayerID)) return;
+                        player = (Player)EntityManager.GetEntityById(playerState.PlayerID);
+
+                        if (player.ID != localPlayerID)
+                        {
+                            player.TurretDirection = playerState.TurretDirection;
+                        }
+
+                        player.Position = playerState.Position;
+                        player.Direction = playerState.Direction;
+                        player.Speed = playerState.Speed;
+
+                        break;
                     }
-
-                    player.Position = playerState.Position;
-                    player.Direction = playerState.Direction;
-                    player.Speed = playerState.Speed;
-
-                    break;
                 case PlayerRespawnedMessage playerRespawned:
                     if (!EntityManager.HasEntityWithId(playerRespawned.PlayerID)) return;
                     player = (Player)EntityManager.GetEntityById(playerRespawned.PlayerID);
@@ -276,7 +290,7 @@ namespace NeonTDS
                     if (!EntityManager.HasEntityWithId(healthMessage.PlayerID)) return;
                     player = (Player)EntityManager.GetEntityById(healthMessage.PlayerID);
                     player.ChangeHealth(healthMessage.Health, healthMessage.Shield);
-
+                    
                     break;
                 case PlayerPoweredUpMessage playerPoweredUp:
                     if (!EntityManager.HasEntityWithId(playerPoweredUp.PlayerID)) return;
@@ -291,6 +305,7 @@ namespace NeonTDS
                     // TODO: Handle for Asteroids
                     break;
             }
+          
         }
 
         public void Draw(CanvasDrawingSession drawingSession, CanvasTimingInformation timing)
@@ -357,5 +372,21 @@ namespace NeonTDS
             drawingSession.DrawText("Ping: " + Math.Round(gameServer.PingMS), new Vector2(0, 32), gameServer.PingMS < 25 ? Colors.LimeGreen : gameServer.PingMS < 50 ? Colors.YellowGreen : gameServer.PingMS < 100 ? Colors.Yellow : gameServer.PingMS < 150 ? Colors.Orange : gameServer.PingMS < 300 ? Colors.OrangeRed : Colors.Red);
             drawingSession.DrawText(DebugString ?? "", new Vector2(0, 64), Colors.Wheat);
         }
+
+        public void SetPlayerNameColor(string name, int color, string ip, string port, MainPage _mainPage)
+        {
+
+            gameServer.SendConnectRequest(name, 0);
+            mainPage = _mainPage;
+            timeToDisconnect = 5;
+            nowTime = 0;
+            lastTimeProcessed = nowTime;
+        }
+
+        private void SetConnectScreen()
+        {
+            mainPage.setConnectScrren();
+        }
+
     }
 }
