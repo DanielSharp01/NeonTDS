@@ -211,7 +211,7 @@ namespace NeonTDS
 								Direction = asteroidData.Direction
 								
 							};
-							EntityRenderer.addShapeToDictionary(canvasForAsteroids, ret.Shape, ret.Radius + 1);
+							EntityRenderer.addShapeToDictionary(canvasForAsteroids, ret.Shape, ret.Radius * 2);
 							return ret;
 						}
                 }

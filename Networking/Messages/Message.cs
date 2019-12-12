@@ -18,7 +18,7 @@ namespace NeonTDS
             BinaryWriter writer = new BinaryWriter(stream);
             foreach (Message message in messages)
             {
-                message.ToBytes(writer);
+                if (message != null) message.ToBytes(writer);
             }
         }
 

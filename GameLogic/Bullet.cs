@@ -18,7 +18,8 @@ namespace NeonTDS
             base(entityManager, Shape.Bullet)
         {
             OwnerID = ownerID;
-            IsSniperBullet = false;
+            IsSniperBullet = false
+                ;
         }
 
         public override void Update(float elapsedTimeSeconds) {

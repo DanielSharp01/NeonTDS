@@ -116,7 +116,14 @@ namespace NeonTDS
                         PowerUpType = powerUp.Type,
                         Position = powerUp.Position
                     };
-                //TODO: case Asteroid asteroid:
+                case Asteroid asteroid:
+                    return new AsteroidData()
+                    {
+                        ShapeID = asteroid.ShapeID,
+                        Direction = asteroid.Direction,
+                        Position = asteroid.Position,
+                        RotationSpeed = asteroid.RotationSpeed
+                    };
             }
 
             return null;

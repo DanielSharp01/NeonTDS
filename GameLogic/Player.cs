@@ -187,7 +187,7 @@ namespace NeonTDS
                 if (b.IsSniperBullet) InflictDamage(255);
                 else InflictDamage(Bullet.Damage);
             }
-            else if (other is Player)
+            else if (other is Player || other is Asteroid)
             {
                 InflictDamage(255);
             }
@@ -211,10 +211,10 @@ namespace NeonTDS
             Vector2 position;
             bool SpawnPositionIsWrong()
             {
-                foreach (Player player in entityManager.Entities.Where(e => e is Player).Cast<Player>())
+                foreach (Entity other in entityManager.Entities.Where(e => e is Player || e is Asteroid))
                 {
-                    if (player == this) continue;
-                    if ((position - player.Position).Length() < 500)
+                    if (other == this) continue;
+                    if ((position - other.Position).Length() < 100)
                     {
                         return true;
                     }

@@ -36,9 +36,9 @@ namespace NeonTDS
             List<Vector2> entityPoints = entity.Shape.Points.Select(p => Vector2.Transform(p, entity.Transformation)).ToList();
             Vector2 bulletStart = bullet.Position - bullet.Speed * elapsedTimeSeconds * GameMath.Vector2FromAngle(bullet.Direction);
             Vector2 bulletEnd = Vector2.Transform(bullet.Shape.Points.ElementAt(1), bullet.Transformation);
-            for (int i = 0; i < entityPoints.Count - 1; i++)
+            for (int i = 0; i < entityPoints.Count; i++)
             {
-                float? intersect = LineSegmentsIntersect(bulletStart, bulletEnd, entityPoints[i], entityPoints[i + 1]);
+                float? intersect = LineSegmentsIntersect(bulletStart, bulletEnd, entityPoints[i % entityPoints.Count], entityPoints[(i + 1) % entityPoints.Count]);
                 if (intersect != null && intersect >= 0 && (minIntersect == null || minIntersect > intersect))
                 {
                     minIntersect = intersect;
@@ -48,7 +48,7 @@ namespace NeonTDS
             if (minIntersect == null) return null;
             return bulletStart + (bulletEnd - bulletStart) * minIntersect;
         }
-
+        
         public static bool TestClosedShapes(Entity entityA, Entity entityB)
         {
             if ((entityA.Position - entityB.Position).Length() > entityA.Shape.Radius + entityB.Shape.Radius) return false;
@@ -56,11 +56,11 @@ namespace NeonTDS
             List<Vector2> entityAPoints = entityA.Shape.Points.Select(p => Vector2.Transform(p, entityA.Transformation)).ToList();
             List<Vector2> entityBPoints = entityB.Shape.Points.Select(p => Vector2.Transform(p, entityB.Transformation)).ToList();
 
-            for (int i = 0; i < entityAPoints.Count - 1; i++)
+            for (int i = 0; i < entityAPoints.Count; i++)
             {
-                for (int j = 0; j < entityBPoints.Count - 1; j++)
+                for (int j = 0; j < entityBPoints.Count; j++)
                 {
-                    if (LineSegmentsIntersect(entityAPoints[i], entityAPoints[i + 1], entityBPoints[j], entityBPoints[j + 1]) != null) return true;
+                    if (LineSegmentsIntersect(entityAPoints[i % entityAPoints.Count], entityAPoints[(i + 1) % entityAPoints.Count], entityBPoints[j % entityBPoints.Count], entityBPoints[(j + 1) % entityBPoints.Count]) != null) return true;
                 }
             }
 

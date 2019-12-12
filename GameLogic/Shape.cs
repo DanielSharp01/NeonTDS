@@ -50,7 +50,7 @@ namespace NeonTDS
         public Shape(IEnumerable<Vector2> points, Vector2 origin, bool closed = true)
         {
             this.points.AddRange(points);
-            Radius = (float)Math.Sqrt(points.Select(p => (p - origin).LengthSquared()).Min());
+            Radius = (float)Math.Sqrt(points.Select(p => (p - origin).LengthSquared()).Max());
             Origin = origin;
             Closed = closed;
         }

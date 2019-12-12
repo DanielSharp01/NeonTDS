@@ -9,8 +9,6 @@ namespace NeonTDS
     {
         public uint Clock { get; private set; } = 0;
 
-		private bool asteroidsGenerated = false;
-
         public void Tick()
         {
             Clock++;
@@ -37,6 +35,7 @@ namespace NeonTDS
         public EntityManager(bool serverSide)
         {
             ServerSide = serverSide;
+            generateAsteroids();
         }
 
         public bool HasEntityWithId(uint id)
@@ -63,15 +62,15 @@ namespace NeonTDS
         {
             if (type == typeof(Bullet))
             {
-                return Entities.Where(e => e is Player);
+                return Entities.Where(e => e is Player || e is Asteroid);
             }
             else if (type == typeof(Player))
             {
-                return Entities.Where(e => e is Player || e is PowerUp);
+                return Entities.Where(e => e is Player || e is PowerUp || e is Asteroid);
             }
-			
 
-			return Enumerable.Empty<Entity>();
+
+            return Enumerable.Empty<Entity>();
         }
 
         public Entity Create(Entity entity, bool bypassQueue = false)
@@ -132,14 +131,17 @@ namespace NeonTDS
 
 		public void generateAsteroids()
 		{
-			if (!ServerSide || asteroidsGenerated) return;
-			//TODO generate asteroids
-		}
+			if (!ServerSide) return;
+
+            for (int i = 0; i < 25; i++)
+            {
+                Create(new Asteroid(this, (byte)GameMath.Random.Next(0, 255)), true);
+            }
+        }
 
         public void Update(float elapsedTimeSeconds)
         {
             UpdatePowerUps(elapsedTimeSeconds);
-			generateAsteroids();
 
             foreach (Entity entity in creatableEntities)
             {
