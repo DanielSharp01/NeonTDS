@@ -103,7 +103,13 @@ namespace NeonTDS
                         ActivePowerUp = player.ActivePowerUp
                     };
                 case Bullet bullet:
-                    return new BulletData()
+                    if (bullet.IsSniperBullet) return new RayData()
+                    {
+                        Direction = bullet.Direction,
+                        Position = bullet.Position,
+                        PlayerID = bullet.OwnerID
+                    };
+                    else return new BulletData()
                     {
                         Direction = bullet.Direction,
                         Speed = bullet.Speed,
