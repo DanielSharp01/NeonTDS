@@ -222,7 +222,7 @@ namespace NeonTDS
 								Direction = asteroidData.Direction
 								
 							};
-							EntityRenderer.addShapeToDictionary(canvasForAsteroids, ret.Shape, ret.Radius * 2);
+							EntityRenderer.AddDynamicSprite(canvasForAsteroids, ret.Shape, ret.Radius * 2);
 							return ret;
 						}
                 }
@@ -300,9 +300,6 @@ namespace NeonTDS
                     break;
                 case ClockMessage clockMessage:
                     // TODO: Handle if needed
-                    break;
-                case ShapeCreateMessage shapeCreate:
-                    // TODO: Handle for Asteroids
                     break;
             }
           

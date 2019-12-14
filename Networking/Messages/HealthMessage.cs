@@ -8,7 +8,7 @@ namespace NeonTDS
         public byte Health { get; set; }
         public byte Shield { get; set; }
         public HealthMessage()
-            : base(MessageTypes.Damage)
+            : base(MessageTypes.Health)
         { }
 
         public override void FromBytes(BinaryReader reader)
