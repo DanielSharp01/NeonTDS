@@ -50,7 +50,7 @@ namespace NeonTDS
                 case MessageTypes.ConnectResponse:
                     message = new ConnectResponseMessage();
                     break;
-                case MessageTypes.Damage:
+                case MessageTypes.Health:
                     message = new HealthMessage();
                     break;
                 case MessageTypes.EntityCreate:
@@ -73,9 +73,6 @@ namespace NeonTDS
                     break;
                 case MessageTypes.PlayerState:
                     message = new PlayerStateMessage();
-                    break;
-                case MessageTypes.ShapeCreate:
-                    message = new ShapeCreateMessage();
                     break;
             }
 
